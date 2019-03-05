@@ -22,11 +22,10 @@ class ExampleMinionJobModel {
     }
 }
 class ExampleOverlordJobModel {
-    constructor(jobType, jobDescription, url, queue, minionJobs, result) {
+    constructor(jobType, jobDescription, url, minionJobs, result) {
         this.jobType = jobType;
         this.jobDescription = jobDescription;
         this.url = url;
-        this.queue = queue;
         this.minionJobs = minionJobs;
         this.result = result;
     }
@@ -83,7 +82,6 @@ class QueueExampleJobManager {
                 job.moveToFailed({ message: error.message }, true);
             });
         });
-        console.log('here');
     }
     // Job Producer
     addJob(job) {
@@ -114,7 +112,9 @@ class ExampleOverlordJob {
         this.job = job;
         this.result = [];
         this.deferredPromise = new DeferredPromise();
-        const queue = job.queue;
+        // @TODO: find a way to init queue For some reason not working when initing
+        const overlordUUID = v4_1.default();
+        const queue = new bull_1.default(overlordUUID);
         this.queue = queue;
         this.queueManager = new QueueExampleJobManager(queue);
         this.minionJobs = job.minionJobs;
@@ -123,10 +123,8 @@ class ExampleOverlordJob {
         }, (error) => {
             this.handleError(error);
         });
-        console.log('finished init');
     }
     run() {
-        console.log('started running');
         this.startNextMinionJob();
         return this.deferredPromise.promise;
     }
@@ -144,7 +142,9 @@ class ExampleOverlordJob {
     complete() {
         console.log('completeing overlord job');
         this.queue.close();
-        this.deferredPromise.resolve(this);
+        const finalResult = new ExampleOverlordJobResult(this.result);
+        const final = new ExampleOverlordJobModel(this.job.jobType, this.job.jobDescription, this.job.url, this.job.minionJobs, finalResult);
+        this.deferredPromise.resolve(final);
     }
     failWithError(error) {
         // @TODO: find a good way to pass the current job that errored here
@@ -180,20 +180,16 @@ function run() {
         console.log(error, 'error here');
         testQueue.close();
     });
-    // @TODO: use an overlord listner
+    // @TODO: use an overlord manager
     testQueue.process(async (job) => {
         const jobData = job.data;
-        // const builtJob = new ExampleOverlordJobBuilder().build(jobData);
-        const builtJob = new ExampleOverlordJob(jobData);
-        console.log('past building');
+        const builtJob = new ExampleOverlordJobBuilder().build(jobData);
         return builtJob.run().catch((error) => {
             console.log('movedToFailed from overlord');
             job.moveToFailed({ message: error.message }, true);
         });
     });
-    const overlordUUID = v4_1.default();
-    const overlordQueue = new bull_1.default(overlordUUID);
-    const overlordjob1 = new ExampleOverlordJobModel(ExampleOverlordJobType.Overlord1, 'Overlord Job 1 description', 'url or whatever needed', overlordQueue, minionJobs);
+    const overlordjob1 = new ExampleOverlordJobModel(ExampleOverlordJobType.Overlord1, 'Overlord Job 1 description', 'url or whatever needed', minionJobs);
     testQueue.add(overlordjob1);
 }
 run();

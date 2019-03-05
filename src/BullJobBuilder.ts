@@ -31,7 +31,6 @@ class ExampleOverlordJobModel
     public jobType: ExampleOverlordJobType,
     public jobDescription: string,
     public url: string,
-    public queue: Queue,
     public minionJobs: ExampleMinionJobModel[],
     public result?: ExampleOverlordJobResult,
   ) {}
@@ -135,7 +134,6 @@ export class QueueExampleJobManager {
         job.moveToFailed({ message: error.message }, true);
       });
     });
-    console.log('here');
   }
 
   // Job Producer
@@ -217,7 +215,9 @@ export class ExampleOverlordJob
   private queue: Queue;
 
   constructor(public job: ExampleOverlordJobModel) {
-    const queue = job.queue;
+    // @TODO: find a way to init queue For some reason not working when initing
+    const overlordUUID = v4();
+    const queue = new bull(overlordUUID);
     this.queue = queue;
     this.queueManager = new QueueExampleJobManager(queue);
     this.minionJobs = job.minionJobs;
@@ -230,11 +230,9 @@ export class ExampleOverlordJob
         this.handleError(error);
       },
     );
-    console.log('finished init');
   }
 
   run(): Promise<ExampleOverlordJobModel> {
-    console.log('started running');
     this.startNextMinionJob();
 
     return this.deferredPromise.promise;
@@ -255,7 +253,15 @@ export class ExampleOverlordJob
   private complete() {
     console.log('completeing overlord job');
     this.queue.close();
-    this.deferredPromise.resolve(this);
+    const finalResult = new ExampleOverlordJobResult(this.result);
+    const final = new ExampleOverlordJobModel(
+      this.job.jobType,
+      this.job.jobDescription,
+      this.job.url,
+      this.job.minionJobs,
+      finalResult,
+    );
+    this.deferredPromise.resolve(final);
   }
 
   private failWithError(error: Error) {
@@ -311,25 +317,20 @@ function run() {
     },
   );
 
-  // @TODO: use an overlord listner
+  // @TODO: use an overlord manager
   testQueue.process(async (job: Job) => {
     const jobData = <ExampleOverlordJobModel>job.data;
-    // const builtJob = new ExampleOverlordJobBuilder().build(jobData);
-    const builtJob = new ExampleOverlordJob(jobData);
-    console.log('past building');
+    const builtJob = new ExampleOverlordJobBuilder().build(jobData);
     return builtJob.run().catch((error: Error) => {
       console.log('movedToFailed from overlord');
       job.moveToFailed({ message: error.message }, true);
     });
   });
 
-  const overlordUUID = v4();
-  const overlordQueue = new bull(overlordUUID);
   const overlordjob1 = new ExampleOverlordJobModel(
     ExampleOverlordJobType.Overlord1,
     'Overlord Job 1 description',
     'url or whatever needed',
-    overlordQueue,
     minionJobs,
   );
   testQueue.add(overlordjob1);
