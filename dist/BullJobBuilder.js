@@ -36,8 +36,10 @@ class ExampleMinionJobResult {
     }
 }
 class ExampleOverlordJobResult {
-    constructor(result) {
+    constructor(result, error, failedJob) {
         this.result = result;
+        this.error = error;
+        this.failedJob = failedJob;
     }
 }
 class ExampleMinionJob {
@@ -112,7 +114,7 @@ class ExampleOverlordJob {
         this.job = job;
         this.result = [];
         this.deferredPromise = new DeferredPromise();
-        // @TODO: find a way to init queue For some reason not working when initing
+        // @TODO: find a way to pass in queue instead of create in init
         const overlordUUID = v4_1.default();
         const queue = new bull_1.default(overlordUUID);
         this.queue = queue;
@@ -139,16 +141,19 @@ class ExampleOverlordJob {
         this.currentJob = firstJob;
         this.queueManager.addJob(firstJob);
     }
-    complete() {
+    complete(error, failedJob) {
         console.log('completeing overlord job');
         this.queue.close();
-        const finalResult = new ExampleOverlordJobResult(this.result);
+        const finalResult = new ExampleOverlordJobResult(this.result, error, failedJob);
         const final = new ExampleOverlordJobModel(this.job.jobType, this.job.jobDescription, this.job.url, this.job.minionJobs, finalResult);
+        if (error != null) {
+            this.deferredPromise.reject(final);
+            return;
+        }
         this.deferredPromise.resolve(final);
     }
     failWithError(error) {
-        // @TODO: find a good way to pass the current job that errored here
-        this.deferredPromise.reject(error);
+        this.complete(error, this.currentJob);
     }
     handleResult(job, jobModel) {
         this.result.push(jobModel);
@@ -172,12 +177,15 @@ function run() {
     const startURL = 'URL.com';
     const job1 = new ExampleMinionJobModel(ExampleMinionJobType.Minion1, 'Job 1 description', startURL);
     const minionJobs = [job1, job1, job1];
-    new QueueExampleOverlordJobListener(testQueue, (job, result) => {
+    new QueueExampleOverlordJobListener(testQueue, (job, jobModel) => {
         console.log(job.id, 'overlord job id');
-        console.log(result, 'overlord results');
+        console.log(jobModel, 'completed overlord job model');
+        console.log(jobModel.result, 'overlord job result');
         testQueue.close();
-    }, (error) => {
-        console.log(error, 'error here');
+    }, (jobModel) => {
+        console.log(jobModel, 'failed overlord job');
+        console.log(jobModel.result.error, 'failed overlord error');
+        console.log(jobModel.result.failedJob, 'the failed minion job');
         testQueue.close();
     });
     // @TODO: use an overlord manager

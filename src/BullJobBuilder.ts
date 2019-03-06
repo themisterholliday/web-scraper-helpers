@@ -1,5 +1,6 @@
 import bull, { Queue, Job } from 'bull';
 import v4 from 'uuid/v4';
+import { timingSafeEqual } from 'crypto';
 
 export enum ExampleMinionJobType {
   Minion1,
@@ -45,7 +46,11 @@ class ExampleMinionJobResult implements JobResult {
 }
 
 class ExampleOverlordJobResult implements JobResult {
-  constructor(public result: ExampleMinionJobModel[]) {}
+  constructor(
+    public result: ExampleMinionJobModel[],
+    public error?: Error,
+    public failedJob?: ExampleMinionJobModel,
+  ) {}
 }
 
 interface JobInterface<
@@ -177,24 +182,24 @@ interface OverlordJobListener<
   JobType,
   Model extends JobModel<JobType, Result>
 > {
-  jobResultCallback: (job: Job, jobModel: Model[]) => void;
-  errorCallback: ErrorCallback;
+  jobResultCallback: (job: Job, jobModel: Model) => void;
+  errorCallback: (jobModel: Model) => void;
 }
 
 export class QueueExampleOverlordJobListener
   implements
     OverlordJobListener<
-      ExampleMinionJobResult,
-      ExampleMinionJobType,
-      ExampleMinionJobModel
+      ExampleOverlordJobResult,
+      ExampleOverlordJobType,
+      ExampleOverlordJobModel
     > {
   constructor(
     private queue: Queue,
     public jobResultCallback: (
       job: Job,
-      jobModel: ExampleMinionJobModel[],
+      jobModel: ExampleOverlordJobModel,
     ) => void,
-    public errorCallback: ErrorCallback,
+    public errorCallback: (jobModel: ExampleOverlordJobModel) => void,
   ) {
     this.queue.on('completed', jobResultCallback).on('error', errorCallback);
   }
@@ -215,7 +220,7 @@ export class ExampleOverlordJob
   private queue: Queue;
 
   constructor(public job: ExampleOverlordJobModel) {
-    // @TODO: find a way to init queue For some reason not working when initing
+    // @TODO: find a way to pass in queue instead of create in init
     const overlordUUID = v4();
     const queue = new bull(overlordUUID);
     this.queue = queue;
@@ -250,10 +255,14 @@ export class ExampleOverlordJob
     this.queueManager.addJob(firstJob);
   }
 
-  private complete() {
+  private complete(error?: Error, failedJob?: ExampleMinionJobModel) {
     console.log('completeing overlord job');
     this.queue.close();
-    const finalResult = new ExampleOverlordJobResult(this.result);
+    const finalResult = new ExampleOverlordJobResult(
+      this.result,
+      error,
+      failedJob,
+    );
     const final = new ExampleOverlordJobModel(
       this.job.jobType,
       this.job.jobDescription,
@@ -261,12 +270,15 @@ export class ExampleOverlordJob
       this.job.minionJobs,
       finalResult,
     );
+    if (error != null) {
+      this.deferredPromise.reject(final);
+      return;
+    }
     this.deferredPromise.resolve(final);
   }
 
   private failWithError(error: Error) {
-    // @TODO: find a good way to pass the current job that errored here
-    this.deferredPromise.reject(error);
+    this.complete(error, this.currentJob);
   }
 
   private handleResult(job: Job, jobModel: ExampleMinionJobModel) {
@@ -306,13 +318,16 @@ function run() {
 
   new QueueExampleOverlordJobListener(
     testQueue,
-    (job, result) => {
+    (job, jobModel) => {
       console.log(job.id, 'overlord job id');
-      console.log(result, 'overlord results');
+      console.log(jobModel, 'completed overlord job model');
+      console.log(jobModel.result, 'overlord job result');
       testQueue.close();
     },
-    (error) => {
-      console.log(error, 'error here');
+    (jobModel) => {
+      console.log(jobModel, 'failed overlord job');
+      console.log(jobModel.result.error, 'failed overlord error');
+      console.log(jobModel.result.failedJob, 'the failed minion job');
       testQueue.close();
     },
   );
