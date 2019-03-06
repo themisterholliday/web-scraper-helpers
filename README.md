@@ -5,7 +5,7 @@
 npm install
 ```
 
-open a tab and start Redis:
+open a console tab and start Redis:
 ```
 redis-server
 ```
