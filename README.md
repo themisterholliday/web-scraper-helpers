@@ -1,1 +1,19 @@
-ultimate_web_scraper
+# Ultimate Web Scraper
+
+## Quick Start
+```
+npm install
+```
+
+open a tab and start Redis:
+```
+redis-server
+```
+
+and you can run the sample to see the output in the console:
+```
+node dist/BullJobBuilder.js
+```
+
+## Implementation
+// @TODO
