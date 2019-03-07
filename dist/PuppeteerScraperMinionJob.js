@@ -1,15 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var PuppeteerScraperMinionJobType;
-(function (PuppeteerScraperMinionJobType) {
-    PuppeteerScraperMinionJobType[PuppeteerScraperMinionJobType["Minion1"] = 0] = "Minion1";
-})(PuppeteerScraperMinionJobType = exports.PuppeteerScraperMinionJobType || (exports.PuppeteerScraperMinionJobType = {}));
 class PuppeteerScraperMinionJobModel {
-    constructor(jobType, jobDescription, 
+    constructor(jobDescription, 
     // @TODO: make only puppeteer actions
     // @TODO: actions should be tied to job type
     action, result) {
-        this.jobType = jobType;
         this.jobDescription = jobDescription;
         this.action = action;
         this.result = result;
@@ -30,7 +25,7 @@ class PuppeteerScraperMinionJob {
         const actionResult = await this.job.action;
         // @TODO: if action result use result
         const result = new PuppeteerScraperMinionJobResult(`Job completed: ${this.job.jobDescription}`);
-        const finalJob = new PuppeteerScraperMinionJobModel(this.job.jobType, this.job.jobDescription, this.job.action, result);
+        const finalJob = new PuppeteerScraperMinionJobModel(this.job.jobDescription, this.job.action, result);
         return finalJob;
     }
 }

@@ -8,13 +8,8 @@ const v4_1 = __importDefault(require("uuid/v4"));
 const bull_1 = __importDefault(require("bull"));
 const JobManager_1 = require("./JobManager");
 const JobListeners_1 = require("./JobListeners");
-var ExampleOverlordJobType;
-(function (ExampleOverlordJobType) {
-    ExampleOverlordJobType[ExampleOverlordJobType["Overlord1"] = 0] = "Overlord1";
-})(ExampleOverlordJobType = exports.ExampleOverlordJobType || (exports.ExampleOverlordJobType = {}));
 class ExampleOverlordJobModel {
-    constructor(jobType, jobDescription, url, minionJobs, result) {
-        this.jobType = jobType;
+    constructor(jobDescription, url, minionJobs, result) {
         this.jobDescription = jobDescription;
         this.url = url;
         this.minionJobs = minionJobs;
@@ -66,7 +61,7 @@ class ExampleOverlordJob {
         console.log('completeing overlord job');
         this.queue.close();
         const finalResult = new ExampleOverlordJobResult(this.result, error, failedJob);
-        const final = new ExampleOverlordJobModel(this.job.jobType, this.job.jobDescription, this.job.url, this.job.minionJobs, finalResult);
+        const final = new ExampleOverlordJobModel(this.job.jobDescription, this.job.url, this.job.minionJobs, finalResult);
         if (error != null) {
             this.deferredPromise.reject(final);
             return;

@@ -6,14 +6,9 @@ import bull, { Queue, Job } from 'bull';
 import { QueueExampleJobManager } from './JobManager';
 import { QueueExampleMinionJobListener } from './JobListeners';
 
-export enum ExampleOverlordJobType {
-  Overlord1,
-}
-
 export class ExampleOverlordJobModel
-  implements JobModel<ExampleOverlordJobType, ExampleOverlordJobResult> {
+  implements JobModel<ExampleOverlordJobResult> {
   constructor(
-    public jobType: ExampleOverlordJobType,
     public jobDescription: string,
     public url: string,
     public minionJobs: ExampleMinionJobModel[],
@@ -30,12 +25,7 @@ export class ExampleOverlordJobResult implements JobResult {
 }
 
 export class ExampleOverlordJob
-  implements
-    JobInterface<
-      ExampleOverlordJobResult,
-      ExampleOverlordJobType,
-      ExampleOverlordJobModel
-    > {
+  implements JobInterface<ExampleOverlordJobResult, ExampleOverlordJobModel> {
   private queueManager: QueueExampleJobManager;
   public result: ExampleMinionJobModel[] = [];
   private deferredPromise = new DeferredPromise();
@@ -88,7 +78,6 @@ export class ExampleOverlordJob
       failedJob,
     );
     const final = new ExampleOverlordJobModel(
-      this.job.jobType,
       this.job.jobDescription,
       this.job.url,
       this.job.minionJobs,

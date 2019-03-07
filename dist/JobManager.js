@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const JobBuilderInterface_1 = require("./JobBuilderInterface");
+const ExampleMinionJob_1 = require("./ExampleMinionJob");
 class QueueExampleJobManager {
     constructor(queue) {
         this.queue = queue;
         // Job Consumer
         queue.process(async (job) => {
-            const builtJob = new JobBuilderInterface_1.ExampleMinionJobBuilder().build(job.data);
+            const builtJob = new ExampleMinionJob_1.ExampleMinionJob(job.data);
             return builtJob.run().catch((error) => {
                 job.moveToFailed({ message: error.message }, true);
             });

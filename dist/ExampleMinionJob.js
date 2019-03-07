@@ -1,12 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ExampleMinionJobType;
-(function (ExampleMinionJobType) {
-    ExampleMinionJobType[ExampleMinionJobType["Minion1"] = 0] = "Minion1";
-})(ExampleMinionJobType = exports.ExampleMinionJobType || (exports.ExampleMinionJobType = {}));
 class ExampleMinionJobModel {
-    constructor(jobType, jobDescription, url, result) {
-        this.jobType = jobType;
+    constructor(jobDescription, url, result) {
         this.jobDescription = jobDescription;
         this.url = url;
         this.result = result;
@@ -27,7 +22,7 @@ class ExampleMinionJob {
         return new Promise((resolve) => {
             setTimeout(() => {
                 const result = new ExampleMinionJobResult(`Job 1 complete for url: ${this.job.url}`);
-                const finalJob = new ExampleMinionJobModel(this.job.jobType, this.job.jobDescription, this.job.url, result);
+                const finalJob = new ExampleMinionJobModel(this.job.jobDescription, this.job.url, result);
                 resolve(finalJob);
             }, 1000);
         });

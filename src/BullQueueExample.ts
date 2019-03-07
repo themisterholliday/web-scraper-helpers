@@ -1,24 +1,16 @@
 import bull, { Job } from 'bull';
-import {
-  ExampleMinionJobType,
-  ExampleMinionJobModel,
-} from './ExampleMinionJob';
+import { ExampleMinionJobModel } from './ExampleMinionJob';
 import { QueueExampleOverlordJobListener } from './JobListeners';
 import {
   ExampleOverlordJobModel,
-  ExampleOverlordJobType,
+  ExampleOverlordJob,
 } from './ExampleOverlordJob';
-import { ExampleOverlordJobBuilder } from './JobBuilderInterface';
 
 function run() {
   const testQueue = new bull('test-queue');
 
   const startURL = 'URL.com';
-  const job1 = new ExampleMinionJobModel(
-    ExampleMinionJobType.Minion1,
-    'Job 1 description',
-    startURL,
-  );
+  const job1 = new ExampleMinionJobModel('Job 1 description', startURL);
 
   const minionJobs = [job1, job1, job1];
 
@@ -44,7 +36,7 @@ function run() {
   // @TODO: use an overlord manager
   testQueue.process(async (job: Job) => {
     const jobData = <ExampleOverlordJobModel>job.data;
-    const builtJob = new ExampleOverlordJobBuilder().build(jobData);
+    const builtJob = new ExampleOverlordJob(jobData);
     return builtJob.run().catch((error: Error) => {
       console.log('movedToFailed from overlord');
       job.moveToFailed({ message: error.message }, true);
@@ -52,7 +44,6 @@ function run() {
   });
 
   const overlordjob1 = new ExampleOverlordJobModel(
-    ExampleOverlordJobType.Overlord1,
     'Overlord Job 1 description',
     'url or whatever needed',
     minionJobs,

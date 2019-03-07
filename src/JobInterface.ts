@@ -1,5 +1,4 @@
-export interface JobModel<JobType, Result extends JobResult> {
-  jobType: JobType;
+export interface JobModel<Result extends JobResult> {
   jobDescription: string;
   result?: Result;
 }
@@ -10,8 +9,7 @@ export interface JobResult {
 
 export interface JobInterface<
   Results extends JobResult,
-  JobType,
-  Model extends JobModel<JobType, Results>
+  Model extends JobModel<Results>
 > {
   job: Model;
   run(): Promise<Model>;

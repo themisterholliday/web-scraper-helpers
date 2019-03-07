@@ -5,15 +5,9 @@ import {
   createPage,
 } from './scraper_module/puppeteerActions';
 
-export enum PuppeteerScraperMinionJobType {
-  Minion1,
-}
-
 export class PuppeteerScraperMinionJobModel
-  implements
-    JobModel<PuppeteerScraperMinionJobType, PuppeteerScraperMinionJobResult> {
+  implements JobModel<PuppeteerScraperMinionJobResult> {
   constructor(
-    public jobType: PuppeteerScraperMinionJobType,
     public jobDescription: string,
     // @TODO: make only puppeteer actions
     // @TODO: actions should be tied to job type
@@ -30,7 +24,6 @@ export class PuppeteerScraperMinionJob
   implements
     JobInterface<
       PuppeteerScraperMinionJobResult,
-      PuppeteerScraperMinionJobType,
       PuppeteerScraperMinionJobModel
     > {
   constructor(public job: PuppeteerScraperMinionJobModel) {}
@@ -42,7 +35,6 @@ export class PuppeteerScraperMinionJob
       `Job completed: ${this.job.jobDescription}`,
     );
     const finalJob = new PuppeteerScraperMinionJobModel(
-      this.job.jobType,
       this.job.jobDescription,
       this.job.action,
       result,

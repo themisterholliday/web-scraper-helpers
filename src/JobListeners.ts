@@ -2,31 +2,23 @@ import { JobResult, JobModel } from './JobInterface';
 import {
   ExampleOverlordJobModel,
   ExampleOverlordJobResult,
-  ExampleOverlordJobType,
 } from './ExampleOverlordJob';
 import {
   ExampleMinionJobResult,
   ExampleMinionJobModel,
-  ExampleMinionJobType,
 } from './ExampleMinionJob';
 import { Queue, Job } from 'bull';
 
 interface MinionJobListener<
   Result extends JobResult,
-  JobType,
-  Model extends JobModel<JobType, Result>
+  Model extends JobModel<Result>
 > {
   jobResultCallback: (job: Job, jobModel: Model) => void;
   errorCallback: (error: Error) => void;
 }
 
 export class QueueExampleMinionJobListener
-  implements
-    MinionJobListener<
-      ExampleMinionJobResult,
-      ExampleMinionJobType,
-      ExampleMinionJobModel
-    > {
+  implements MinionJobListener<ExampleMinionJobResult, ExampleMinionJobModel> {
   constructor(
     private queue: Queue,
     public jobResultCallback: (
@@ -41,8 +33,7 @@ export class QueueExampleMinionJobListener
 
 interface OverlordJobListener<
   Result extends JobResult,
-  JobType,
-  Model extends JobModel<JobType, Result>
+  Model extends JobModel<Result>
 > {
   jobResultCallback: (job: Job, jobModel: Model) => void;
   errorCallback: (jobModel: Model) => void;
@@ -50,11 +41,7 @@ interface OverlordJobListener<
 
 export class QueueExampleOverlordJobListener
   implements
-    OverlordJobListener<
-      ExampleOverlordJobResult,
-      ExampleOverlordJobType,
-      ExampleOverlordJobModel
-    > {
+    OverlordJobListener<ExampleOverlordJobResult, ExampleOverlordJobModel> {
   constructor(
     private queue: Queue,
     public jobResultCallback: (

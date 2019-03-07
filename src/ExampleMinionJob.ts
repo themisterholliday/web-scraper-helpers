@@ -1,13 +1,7 @@
 import { JobModel, JobInterface, JobResult } from './JobInterface';
 
-export enum ExampleMinionJobType {
-  Minion1,
-}
-
-export class ExampleMinionJobModel
-  implements JobModel<ExampleMinionJobType, ExampleMinionJobResult> {
+export class ExampleMinionJobModel implements JobModel<ExampleMinionJobResult> {
   constructor(
-    public jobType: ExampleMinionJobType,
     public jobDescription: string,
     public url: string,
     public result?: ExampleMinionJobResult,
@@ -19,12 +13,7 @@ export class ExampleMinionJobResult implements JobResult {
 }
 
 export class ExampleMinionJob
-  implements
-    JobInterface<
-      ExampleMinionJobResult,
-      ExampleMinionJobType,
-      ExampleMinionJobModel
-    > {
+  implements JobInterface<ExampleMinionJobResult, ExampleMinionJobModel> {
   constructor(public job: ExampleMinionJobModel) {}
 
   public run(): Promise<ExampleMinionJobModel> {
@@ -34,7 +23,6 @@ export class ExampleMinionJob
           `Job 1 complete for url: ${this.job.url}`,
         );
         const finalJob = new ExampleMinionJobModel(
-          this.job.jobType,
           this.job.jobDescription,
           this.job.url,
           result,
