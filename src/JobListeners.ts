@@ -9,7 +9,7 @@ import {
 } from './ExampleMinionJob';
 import { Queue, Job } from 'bull';
 
-interface MinionJobListener<
+export interface MinionJobListener<
   Result extends JobResult,
   Model extends JobModel<Result>
 > {
@@ -31,7 +31,7 @@ export class QueueExampleMinionJobListener
   }
 }
 
-interface OverlordJobListener<
+export interface OverlordJobListener<
   Result extends JobResult,
   Model extends JobModel<Result>
 > {
