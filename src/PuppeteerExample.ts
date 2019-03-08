@@ -21,29 +21,7 @@ import bull = require('bull');
   const browser = await createBrowser();
   const page = await createPage(browser);
 
-  const whatever6 = async () => {
-    return new Promise(async (resolve) => {
-      setTimeout(() => {
-        console.log('test 1 done');
-        resolve('done');
-      },         6000);
-    });
-  };
-  const whatever7 = async () => {
-    return new Promise(async (resolve) => {
-      console.log('test 2 started');
-      await whatever6();
-      console.log('test 2 done');
-      resolve('done');
-    });
-  };
-  console.log(whatever7);
-  const one = new PuppeteerScraperMinionJobModel(
-    'navigatePageToURL',
-    0,
-    // navigatePageToURL(page, 'https://en.wikipedia.org/wiki/Brie_Larson', 5000),
-    whatever7,
-  );
+  const one = new PuppeteerScraperMinionJobModel('navigatePageToURL');
   //   const two = new PuppeteerScraperMinionJobModel(
   //     'getTextContentForSelector',
   //     2,
@@ -62,8 +40,7 @@ import bull = require('bull');
       console.log(jobModel, 'completed overlord job model');
       console.log(jobModel.result, 'overlord job result');
       testQueue.close();
-      page.screenshot({ path: 'screenshot.png' });
-      //   closeBrowser(browser);
+      closeBrowser(browser);
     },
     (jobModel) => {
       console.log(jobModel, 'failed overlord job');
@@ -79,11 +56,6 @@ import bull = require('bull');
   // @TODO: use an overlord manager
   testQueue.process(async (job: Job) => {
     const jobData = <PuppeteerScraperOverlordJobModel>job.data;
-    console.log(
-      jobData.minionJobs.map((n) => {
-        n.action;
-      }),
-    );
     const builtJob = new PuppeteerScraperOverlordJob(jobData);
     return builtJob.run().catch((error: Error) => {
       console.log('movedToFailed from overlord');
@@ -93,7 +65,6 @@ import bull = require('bull');
   waitTillSelectorIsVisible;
   const overlordjob1 = new PuppeteerScraperOverlordJobModel(
     'Overlord Job 1 description',
-    0,
     minionJobs,
   );
   testQueue.add(overlordjob1);

@@ -9,7 +9,6 @@ export class PuppeteerScraperMinionJobModel
   implements JobModel<PuppeteerScraperMinionJobResult> {
   constructor(
     public jobDescription: string,
-    public action: () => Promise<any>,
     public result?: PuppeteerScraperMinionJobResult,
   ) {}
 }
@@ -24,24 +23,19 @@ export class PuppeteerScraperMinionJob
       PuppeteerScraperMinionJobResult,
       PuppeteerScraperMinionJobModel
     > {
-  constructor(public job: PuppeteerScraperMinionJobModel) {
-    console.log(this.job.action, 'here');
-  }
+  constructor(public job: PuppeteerScraperMinionJobModel) {}
 
   public async run(): Promise<PuppeteerScraperMinionJobModel> {
     console.log(`Running Job: ${this.job.jobDescription}`);
-    console.log(this.job.action);
-    const actionResult = await this.job.action();
-    console.log(actionResult, 'action result');
-    let result: any = `Job Completed: ${this.job.jobDescription}`;
-    if (actionResult != null && actionResult !== undefined) {
-      result = actionResult;
-    }
+    // const actionResult = await this.job.action();
+    const result: any = `Job Completed: ${this.job.jobDescription}`;
+    // if (actionResult != null && actionResult !== undefined) {
+    //   result = actionResult;
+    // }
 
     const finalResult = new PuppeteerScraperMinionJobResult(result);
     const finalJob = new PuppeteerScraperMinionJobModel(
       this.job.jobDescription,
-      this.job.action,
       finalResult,
     );
     console.log(`Completing Job: ${this.job.jobDescription}`);
@@ -53,7 +47,6 @@ export class PuppeteerScraperOverlordJobModel
   implements JobModel<PuppeteerScraperOverlordJobResult> {
   constructor(
     public jobDescription: string,
-    public orderNumber: number,
     public minionJobs: PuppeteerScraperMinionJobModel[],
     public result?: PuppeteerScraperOverlordJobResult,
   ) {}
@@ -140,7 +133,6 @@ export class PuppeteerScraperOverlordJob
     // @TODO: find a way to pass in queue instead of create in init
     const overlordUUID = v4();
     const queue = new bull(overlordUUID);
-    this.orderNumber = job.orderNumber;
     this.queue = queue;
     this.queueManager = new PuppeteerScraperJobManager(queue);
     this.minionJobs = job.minionJobs;
@@ -189,7 +181,6 @@ export class PuppeteerScraperOverlordJob
     );
     const final = new PuppeteerScraperOverlordJobModel(
       this.job.jobDescription,
-      this.job.orderNumber,
       this.job.minionJobs,
       finalResult,
     );
