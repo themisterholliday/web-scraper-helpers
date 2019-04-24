@@ -1,15 +1,16 @@
-import { JobModel, JobInterface, JobResult } from './JobInterface';
-import { Queue, Job } from 'bull';
-import bull = require('bull');
-import { DeferredPromise } from './DeferredPromise';
-import { v4 } from 'uuid';
-import { MinionJobListener, OverlordJobListener } from './JobListeners';
+import { JobModel, JobInterface, JobResult } from "./JobInterface";
+import { Queue, Job } from "bull";
+import bull = require("bull");
+import { DeferredPromise } from "./DeferredPromise";
+import { v4 } from "uuid";
+import { MinionJobListener, OverlordJobListener } from "./JobListeners";
 
 export class PuppeteerScraperMinionJobModel
   implements JobModel<PuppeteerScraperMinionJobResult> {
   constructor(
     public jobDescription: string,
-    public result?: PuppeteerScraperMinionJobResult,
+    public action: () => Promise<any>,
+    public result?: PuppeteerScraperMinionJobResult
   ) {}
 }
 
@@ -27,16 +28,18 @@ export class PuppeteerScraperMinionJob
 
   public async run(): Promise<PuppeteerScraperMinionJobModel> {
     console.log(`Running Job: ${this.job.jobDescription}`);
-    // const actionResult = await this.job.action();
-    const result: any = `Job Completed: ${this.job.jobDescription}`;
+    console.log(this.job.action);
+    const actionResult = await this.job.action();
+    // const result: any = `Job Completed: ${this.job.jobDescription}`;
     // if (actionResult != null && actionResult !== undefined) {
     //   result = actionResult;
     // }
 
-    const finalResult = new PuppeteerScraperMinionJobResult(result);
+    const finalResult = new PuppeteerScraperMinionJobResult(actionResult);
     const finalJob = new PuppeteerScraperMinionJobModel(
       this.job.jobDescription,
-      finalResult,
+      this.job.action,
+      finalResult
     );
     console.log(`Completing Job: ${this.job.jobDescription}`);
     return finalJob;
@@ -48,7 +51,7 @@ export class PuppeteerScraperOverlordJobModel
   constructor(
     public jobDescription: string,
     public minionJobs: PuppeteerScraperMinionJobModel[],
-    public result?: PuppeteerScraperOverlordJobResult,
+    public result?: PuppeteerScraperOverlordJobResult
   ) {}
 }
 // ------------------------------------------------------------------------------
@@ -62,11 +65,11 @@ export class PuppeteerScraperOverlordJobListener
     private queue: Queue,
     public jobResultCallback: (
       job: Job,
-      jobModel: PuppeteerScraperOverlordJobModel,
+      jobModel: PuppeteerScraperOverlordJobModel
     ) => void,
-    public errorCallback: (jobModel: PuppeteerScraperOverlordJobModel) => void,
+    public errorCallback: (jobModel: PuppeteerScraperOverlordJobModel) => void
   ) {
-    this.queue.on('completed', jobResultCallback).on('error', errorCallback);
+    this.queue.on("completed", jobResultCallback).on("error", errorCallback);
   }
 }
 
@@ -80,11 +83,11 @@ export class PuppeteerScraperMinionJobListener
     private queue: Queue,
     public jobResultCallback: (
       job: Job,
-      jobModel: PuppeteerScraperMinionJobModel,
+      jobModel: PuppeteerScraperMinionJobModel
     ) => void,
-    public errorCallback: (error: Error) => void,
+    public errorCallback: (error: Error) => void
   ) {
-    this.queue.on('completed', jobResultCallback).on('error', errorCallback);
+    this.queue.on("completed", jobResultCallback).on("error", errorCallback);
   }
 }
 
@@ -110,7 +113,7 @@ export class PuppeteerScraperOverlordJobResult implements JobResult {
   constructor(
     public result: PuppeteerScraperMinionJobModel[],
     public error?: Error,
-    public failedMinionJobModel?: PuppeteerScraperMinionJobModel,
+    public failedMinionJobModel?: PuppeteerScraperMinionJobModel
   ) {}
 }
 
@@ -141,9 +144,9 @@ export class PuppeteerScraperOverlordJob
       (job: Job, jobModel: PuppeteerScraperMinionJobModel) => {
         this.handleResult(job, jobModel);
       },
-      (error) => {
+      error => {
         this.handleError(error);
-      },
+      }
     );
   }
 
@@ -172,17 +175,17 @@ export class PuppeteerScraperOverlordJob
   }
 
   private complete(error?: Error, failedJob?: PuppeteerScraperMinionJobModel) {
-    console.log('completeing overlord job');
+    console.log("completeing overlord job");
     this.queue.close();
     const finalResult = new PuppeteerScraperOverlordJobResult(
       this.result,
       error,
-      failedJob,
+      failedJob
     );
     const final = new PuppeteerScraperOverlordJobModel(
       this.job.jobDescription,
       this.job.minionJobs,
-      finalResult,
+      finalResult
     );
     if (error != null) {
       this.deferredPromise.reject(final);

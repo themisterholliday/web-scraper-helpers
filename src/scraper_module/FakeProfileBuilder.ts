@@ -1,4 +1,5 @@
 import { Page } from 'puppeteer';
+import faker from 'faker';
 import { EmailGenerator, TempEmailGenerator } from './TempEmailGenerator';
 import { Profile } from './models/Profile';
 import { navigatePageToURL, extractHTMLFromPage } from './PuppeteerActions';
@@ -9,53 +10,52 @@ export interface FakeUserGenerator {
   generateFirstName(): string;
   generateLastName(): string;
   generateDateOfBirth(): Date;
-  generateGender(): string;
   generateState(): string;
 }
 
 class FakerJSGenerator implements FakeUserGenerator {
-  private faker = require('faker');
+  private faker = faker;
 
-  generatePassword(): string {
+  public generatePassword(): string {
     return this.faker.internet.password(14);
   }
 
-  generateFirstName(): string {
+  public generateFirstName(): string {
     return this.faker.name.firstName();
   }
 
-  generateLastName(): string {
+  public generateLastName(): string {
     return this.faker.name.lastName();
   }
 
-  generateDateOfBirth(): Date {
+  public generateDateOfBirth(): Date {
     return this.faker.date.past(40, '2000-01-01');
   }
 
-  generateGender(): string {
+  public static generateGender(): string {
     const randomBoolean = Math.random() >= 0.5;
     return randomBoolean ? 'f' : 'm';
   }
 
-  generateState(): string {
+  public generateState(): string {
     return this.faker.address.state();
   }
 }
 
 export class FakeProfileBuilder {
-  static async buildProfile(
+  public static async buildProfile(
     page: Page,
     fakeUserGenerator: FakeUserGenerator = new FakerJSGenerator(),
     emailGenerator: EmailGenerator = new TempEmailGenerator(),
   ): Promise<Profile> {
     const generatedEmail = await emailGenerator.createNewEmail(page);
-    const email = generatedEmail.email;
-    const emailUrl = generatedEmail.emailUrl;
+    const { email } = generatedEmail;
+    const { emailUrl } = generatedEmail;
     const password = fakeUserGenerator.generatePassword();
     const firstName = fakeUserGenerator.generatePassword();
     const lastName = fakeUserGenerator.generatePassword();
     const dateOfBirth = fakeUserGenerator.generateDateOfBirth();
-    const gender = fakeUserGenerator.generateGender();
+    const gender = FakerJSGenerator.generateGender();
     const bio = await FakeProfileBuilder.buildBio(page);
     const state = fakeUserGenerator.generateState();
     return new Profile(
@@ -71,7 +71,7 @@ export class FakeProfileBuilder {
     );
   }
 
-  static async buildBio(page: Page): Promise<string> {
+  public static async buildBio(page: Page): Promise<string> {
     const url = 'https://www.designskilz.com/random-users/';
     await navigatePageToURL(page, url);
     const extract = await extractHTMLFromPage(page);

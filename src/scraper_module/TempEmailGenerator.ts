@@ -1,11 +1,11 @@
+import { Page } from 'puppeteer';
 import { GeneratedEmail } from './models/GeneratedEmail';
 import {
   navigatePageToURL,
   extractHTMLFromPage,
   waitTillSelectorIsVisible,
-} from './puppeteerActions';
+} from './PuppeteerActions';
 import { extractValueFromSelector } from './CheerioActions';
-import { Page } from 'puppeteer';
 
 export interface EmailGenerator {
   createNewEmail(page: Page): Promise<GeneratedEmail>;

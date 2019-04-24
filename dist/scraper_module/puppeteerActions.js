@@ -84,7 +84,7 @@ exports.closeBrowser = closeBrowser;
 async function waitRandomAmountOfTimeBetween(page, min = 1000, max = 5000) {
     const randomNumber = getRandomNumber(min, max);
     console.log(`Waiting for random number: ${randomNumber}`);
-    page.waitFor(randomNumber);
+    await page.waitFor(randomNumber);
 }
 exports.waitRandomAmountOfTimeBetween = waitRandomAmountOfTimeBetween;
 function getRandomNumber(min, max) {

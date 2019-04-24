@@ -1,3 +1,4 @@
+import { JobResult } from './JobInterface';
 export interface JobModel<Result extends JobResult> {
   jobDescription: string;
   result?: Result;

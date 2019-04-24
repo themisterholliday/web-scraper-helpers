@@ -1,10 +1,9 @@
+import puppeteer, { Page, Browser } from 'puppeteer';
 import { WebsiteHTMLResponse } from './models/WebsiteHTMLResponse';
-import { Page, Browser } from 'puppeteer';
-const puppeteer = require('puppeteer');
 
-export async function scrollPageToEnd(page: Page) {
+export async function scrollPageToEnd(page: Page): Promise<void> {
   console.log('Scrolling to end of page');
-  await page.evaluate(() => {
+  page.evaluate(() => {
     window.scrollBy(0, window.innerHeight);
   });
 }
@@ -14,14 +13,14 @@ export async function navigatePageToURL(
   url: string,
   waitTimeout: number = 0,
   unloadAllExtras: boolean = false,
-) {
+): Promise<void> {
   console.log(`Connecting to ${url}`);
 
   if (unloadAllExtras) {
     console.log(`Unloading JS, CSS, and images: ${url}`);
     await page.setRequestInterception(true);
     await page.setJavaScriptEnabled(false);
-    page.on('request', (req) => {
+    page.on('request', req => {
       if (
         req.resourceType() === 'stylesheet' ||
         req.resourceType() === 'font' ||
@@ -41,7 +40,10 @@ export async function navigatePageToURL(
   console.log(`Connected to ${url}`);
 }
 
-export async function waitTillSelectorIsVisible(page: Page, selector: string) {
+export async function waitTillSelectorIsVisible(
+  page: Page,
+  selector: string,
+): Promise<void> {
   console.log(`Waiting for Selector: ${selector}`);
   await page.waitFor(selector, { visible: true });
 }
@@ -59,7 +61,10 @@ export async function extractHTMLFromPage(
   return new WebsiteHTMLResponse(url, body);
 }
 
-export async function findSelectorAndClick(page: Page, selector: string) {
+export async function findSelectorAndClick(
+  page: Page,
+  selector: string,
+): Promise<void> {
   console.log(`Finding Selector: ${selector}`);
   await page.waitForSelector(selector);
   console.log(`Clicking Selector: ${selector}`);
@@ -70,19 +75,23 @@ export async function inputTextIntoSelectorWithInputName(
   page: Page,
   inputName: string,
   text: string,
-) {
+): Promise<void> {
   console.log(`Inputting Text: ${text} for inputName: ${inputName}`);
-  await page.evaluate((text) => {
+  await page.evaluate(textToEvaluate => {
     (document.querySelector(
       `input[type=${inputName}]`,
-    ) as HTMLInputElement).value = text;
-  },                  text);
+    ) as HTMLInputElement).value = textToEvaluate;
+  }, text);
 }
 
-export async function createBrowser(): Promise<Browser> {
+export async function createBrowser(proxyAddress?: string): Promise<Browser> {
   console.log('Creating New Browser');
+  const args = ['--incognito'];
+  if (proxyAddress !== undefined) {
+    args.push(`--proxy-server=${proxyAddress}`);
+  }
   const browser = await puppeteer.launch({
-    args: ['--incognito'],
+    args,
   });
   return browser;
 }
@@ -93,48 +102,57 @@ export async function createPage(browser: Browser): Promise<Page> {
   return page;
 }
 
-export async function closeBrowser(browser: Browser) {
+export async function closeBrowser(browser: Browser): Promise<void> {
   console.log('Closing Browser');
   await browser.close();
-}
-
-export async function waitRandomAmountOfTimeBetween(
-  page: Page,
-  min: number = 1000,
-  max: number = 5000,
-) {
-  const randomNumber = getRandomNumber(min, max);
-  console.log(`Waiting for random number: ${randomNumber}`);
-  page.waitFor(randomNumber);
 }
 
 function getRandomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-// retrievers
-export async function getTextContentForSelector(page: Page, selector: string) {
-  return page.evaluate((selector) => {
-    return document.querySelector(selector).textContent;
-  },                   selector);
+export async function waitRandomAmountOfTimeBetween(
+  page: Page,
+  min: number = 1000,
+  max: number = 5000,
+): Promise<void> {
+  const randomNumber = getRandomNumber(min, max);
+  console.log(`Waiting for random number: ${randomNumber}`);
+  await page.waitFor(randomNumber);
 }
 
-export async function getValueForSelector(page: Page, selector: string) {
-  return page.evaluate((selector) => {
-    return document.querySelector(selector).value;
-  },                   selector);
+// retrievers
+export async function getTextContentForSelector(
+  page: Page,
+  selector: string,
+): Promise<string> {
+  return page.evaluate(
+    selectorToEvaluate =>
+      document.querySelector(selectorToEvaluate).textContent,
+    selector,
+  );
+}
+
+export async function getValueForSelector(
+  page: Page,
+  selector: string,
+): Promise<string> {
+  return page.evaluate(
+    selectorToEvaluate => document.querySelector(selectorToEvaluate).value,
+    selector,
+  );
 }
 
 export async function getPropertyValue(
   page: Page,
   selector: string,
   property: string,
-) {
+): Promise<string> {
   try {
     return page.evaluate(
-      (selector, property) => {
-        const element = document.querySelector(selector);
-        return element[property];
+      (selectorToEvaluate, propertyToEvaluate) => {
+        const element = document.querySelector(selectorToEvaluate);
+        return element[propertyToEvaluate];
       },
       selector,
       property,
@@ -147,24 +165,25 @@ export async function getPropertyValue(
 export async function getTextContentForAllSelectors(
   page: Page,
   selector: string,
-) {
-  const results = await page.evaluate((selector) => {
-    const divs: HTMLElement[] = Array.from(document.querySelectorAll(selector));
-    return divs.map((div) => {
-      div.textContent.trim();
-    });
-  },                                  selector);
+): Promise<string[]> {
+  const results = await page.evaluate(selectorToEvaluate => {
+    const divs: HTMLElement[] = Array.from(
+      document.querySelectorAll(selectorToEvaluate),
+    );
+    return divs.map(div => div.textContent.trim());
+  }, selector);
   return results;
 }
 
-export async function getAnchorsForAllSelectors(page: Page, selector: string) {
-  const results = await page.evaluate((selector) => {
+export async function getAnchorsForAllSelectors(
+  page: Page,
+  selector: string,
+): Promise<string[]> {
+  const results = await page.evaluate(selectorToEvaluate => {
     const divs: HTMLAnchorElement[] = Array.from(
-      document.querySelectorAll(selector),
+      document.querySelectorAll(selectorToEvaluate),
     );
-    return divs.map((div) => {
-      div.href;
-    });
-  },                                  selector);
+    return divs.map(div => div.href);
+  }, selector);
   return results;
 }
