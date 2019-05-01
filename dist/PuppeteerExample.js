@@ -1,10 +1,5 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const bull_1 = __importDefault(require("bull"));
-const PuppeteerActions_1 = require("./scraper_module/PuppeteerActions");
 // async function getLinksFromChromeWebStore(
 //   url: string,
 //   page: Page,
@@ -124,31 +119,31 @@ async function bigTest(page) {
     // await closeBrowser(browser);
 }
 // TEST RUN
-(async () => {
-    const browser = await PuppeteerActions_1.createBrowser();
-    const page = await PuppeteerActions_1.createPage(browser);
-    // const one = new PuppeteerScraperMinionJobModel('navigatePageToURL');
-    //   const two = new PuppeteerScraperMinionJobModel(
-    //     'getTextContentForSelector',
-    //     2,
-    //     getTextContentForSelector(page, 'p'),
-    //   );
-    const testQueue = new bull_1.default('test-queue');
-    // @TODO: fix last in last out or whatever is going on here
-    // const minionJobs = [one];
-    testQueue.on('completed', (job, result) => {
-        console.log(`Job completed with result ${result}`);
-        testQueue.close();
-        browser.close();
-    });
-    testQueue.process('minionCrawl', async (job) => {
-        const { action } = job.data;
-        const actionToRun = await PuppeteerActions_1.puppeteerActionFrom(page, action);
-        return actionToRun();
-    });
-    const testAction = new PuppeteerActions_1.NavigatePageToURLAction('https://www.google.com');
-    testQueue.add('minionCrawl', {
-        action: testAction,
-    });
-})();
+// (async () => {
+//   const browser = await createBrowser();
+//   const page = await createPage(browser);
+//   // const one = new PuppeteerScraperMinionJobModel('navigatePageToURL');
+//   //   const two = new PuppeteerScraperMinionJobModel(
+//   //     'getTextContentForSelector',
+//   //     2,
+//   //     getTextContentForSelector(page, 'p'),
+//   //   );
+//   const testQueue = new Bull('test-queue');
+//   // @TODO: fix last in last out or whatever is going on here
+//   // const minionJobs = [one];
+//   testQueue.on('completed', (job, result) => {
+//     console.log(`Job completed with result ${result}`);
+//     testQueue.close();
+//     browser.close();
+//   });
+//   testQueue.process('minionCrawl', async (job: Job) => {
+//     const { action } = job.data;
+//     const actionToRun = await puppeteerActionFrom(page, action);
+//     return actionToRun();
+//   });
+//   const testAction = new NavigatePageToURLAction('https://www.google.com');
+//   testQueue.add('minionCrawl', {
+//     action: testAction,
+//   });
+// })();
 //# sourceMappingURL=PuppeteerExample.js.map

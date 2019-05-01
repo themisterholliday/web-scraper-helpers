@@ -1,8 +1,10 @@
 import { Page } from 'puppeteer';
 import faker from 'faker';
-import { EmailGenerator /*TempEmailGenerator */ } from './TempEmailGenerator';
 import { Profile } from './models/Profile';
-import { navigatePageToURL, extractHTMLFromPage } from './PuppeteerActions';
+import {
+  navigatePageToURL,
+  extractHTMLFromPage,
+} from './PuppeteerAbstractMethods';
 import { extractTextFromSelector } from './CheerioActions';
 
 export interface FakeUserGenerator {
