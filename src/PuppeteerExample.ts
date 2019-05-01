@@ -1,51 +1,52 @@
-import Bull, { Job } from 'bull';
-import { Page } from 'puppeteer';
+import { Page, Browser } from 'puppeteer';
 import {
-  createBrowser,
-  createPage,
-  navigatePageToURL,
-  closeBrowser,
-  getTextContentForAllSelectors,
-  getTextContentForSelector,
-  waitTillSelectorIsVisible,
   waitRandomAmountOfTimeBetween,
-  getAnchorsForAllSelectors,
-  extractHTMLFromPage,
   scrollPageToEnd,
-  NavigatePageToURLOptions,
+  extractHTMLFromPage,
+  getTextContentForSelector,
+  getValueForSelector,
+  getAnchorsForAllSelectors,
+  waitTillSelectorIsVisible,
+  findSelectorAndClick,
+  getPropertyValue,
+  navigatePageToURL,
+  inputTextIntoSelectorWithInputName,
+  PuppeteerOptions,
+  EmptyPuppeteerOptions,
   WaitRandomTimeOptions,
   PuppeteerSelectorOptions,
+  PuppeteerSelectorPropertyOptions,
+  NavigatePageToURLOptions,
+  InputTextIntoSelectorWithInputNameOptions,
 } from './scraper_module/PuppeteerAbstractMethods';
 import {
   getAllLinks,
   getTextFromElementContainingString,
   getTextFromElementAfterElementContainingString,
 } from './scraper_module/CheerioActions';
+import { randomBoolByPercentage } from './util/RandomUtil';
 
-// async function getLinksFromChromeWebStore(
-//   url: string,
-//   page: Page,
-//   numberOfPages: number,
-// ): Promise<string[]> {
-//   await navigatePageToURL(new NavigatePageToURLOptions(page, url));
+async function getLinksFromChromeWebStore(
+  url: string,
+  page: Page,
+  numberOfPages: number,
+): Promise<string[]> {
+  await navigatePageToURL(page, { url });
 
-//   await waitTillSelectorIsVisible(
-//     new PuppeteerSelectorOptions(page, 'div.h-a-x'),
-//   );
+  await waitTillSelectorIsVisible(page, { selector: 'div.h-a-x' });
 
-//   const numberOfTries = [...Array(numberOfPages)];
-//   const pageOptions = new PuppeteerPageOptions(page);
-//   for (const i in numberOfTries) {
-//     await scrollPageToEnd(pageOptions);
-//     await waitRandomAmountOfTimeBetween(new WaitRandomTimeOptions(page));
-//   }
+  const numberOfTries = [...Array(numberOfPages)];
+  for (const i in numberOfTries) {
+    await scrollPageToEnd(page);
+    await waitRandomAmountOfTimeBetween(page, new WaitRandomTimeOptions());
+  }
 
-//   const html = await extractHTMLFromPage(new PuppeteerPageOptions(page));
-//   const links = getAllLinks(html.html);
+  const html = await extractHTMLFromPage(page);
+  const links = getAllLinks(html.html);
 
-//   await waitRandomAmountOfTimeBetween(new WaitRandomTimeOptions(page));
-//   return links;
-// }
+  await waitRandomAmountOfTimeBetween(page, new WaitRandomTimeOptions());
+  return links;
+}
 
 // class DetailScrape {
 //   constructor(public title: string, public date: string, public url: string) {}

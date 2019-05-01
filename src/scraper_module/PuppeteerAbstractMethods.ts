@@ -1,5 +1,6 @@
 import puppeteer, { Page, Browser } from 'puppeteer';
 import { WebsiteHTMLResponse } from './models/WebsiteHTMLResponse';
+import { getRandomNumber } from '../util/RandomUtil';
 
 // Options
 export interface PuppeteerOptions {
@@ -104,10 +105,6 @@ export async function closeBrowser(browser: Browser): Promise<void> {
 }
 
 // Puppeteer Actions
-function getRandomNumber(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min)) + min;
-}
-
 export async function waitRandomAmountOfTimeBetween(
   page: Page,
   options: PuppeteerOptions,
