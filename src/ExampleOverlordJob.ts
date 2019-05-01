@@ -1,8 +1,8 @@
+import v4 from 'uuid/v4';
+import bull, { Queue, Job } from 'bull';
 import { DeferredPromise } from './DeferredPromise';
 import { JobInterface, JobModel, JobResult } from './JobInterface';
 import { ExampleMinionJobModel } from './ExampleMinionJob';
-import v4 from 'uuid/v4';
-import bull, { Queue, Job } from 'bull';
 import { QueueExampleJobManager } from './JobManager';
 import { QueueExampleMinionJobListener } from './JobListeners';
 
@@ -17,7 +17,7 @@ export class ExampleOverlordJobModel
 }
 
 export class ExampleOverlordJobResult implements JobResult {
-  constructor(
+  public constructor(
     public result: ExampleMinionJobModel[],
     public error?: Error,
     public failedMinionJobModel?: ExampleMinionJobModel,
@@ -25,12 +25,17 @@ export class ExampleOverlordJobResult implements JobResult {
 }
 
 export class ExampleOverlordJob
-  implements JobInterface<ExampleOverlordJobResult, ExampleOverlordJobModel> {
+implements JobInterface<ExampleOverlordJobResult, ExampleOverlordJobModel> {
   private queueManager: QueueExampleJobManager;
+
   public result: ExampleMinionJobModel[] = [];
+
   private deferredPromise = new DeferredPromise();
+
   private currentJob?: ExampleMinionJobModel;
+
   private minionJobs: ExampleMinionJobModel[];
+
   private queue: Queue;
 
   constructor(public job: ExampleOverlordJobModel) {
@@ -45,7 +50,7 @@ export class ExampleOverlordJob
       (job: Job, jobModel: ExampleMinionJobModel) => {
         this.handleResult(job, jobModel);
       },
-      (error) => {
+      error => {
         this.handleError(error);
       },
     );

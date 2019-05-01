@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const DeferredPromise_1 = require("./DeferredPromise");
 const v4_1 = __importDefault(require("uuid/v4"));
 const bull_1 = __importDefault(require("bull"));
+const DeferredPromise_1 = require("./DeferredPromise");
 const JobManager_1 = require("./JobManager");
 const JobListeners_1 = require("./JobListeners");
 class ExampleOverlordJobModel {
@@ -38,7 +38,7 @@ class ExampleOverlordJob {
         this.minionJobs = job.minionJobs;
         new JobListeners_1.QueueExampleMinionJobListener(queue, (job, jobModel) => {
             this.handleResult(job, jobModel);
-        }, (error) => {
+        }, error => {
             this.handleError(error);
         });
     }

@@ -3,7 +3,7 @@
   "extends": [
     "wesbos",
     "plugin:@typescript-eslint/recommended",
-    "plugin:import/typescript"
+    "prettier/@typescript-eslint"
   ],
   "plugins": ["@typescript-eslint"],
   "parserOptions": {
@@ -11,7 +11,6 @@
     "sourceType": "module"
   },
   "rules": {
-    "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/explicit-function-return-type": [
       "warn",
       {
@@ -21,6 +20,7 @@
     "prettier/prettier": [
       "error",
       {
+        "semi": true,
         "trailingComma": "all",
         "singleQuote": true,
         "jsx-singleQuote": false,
