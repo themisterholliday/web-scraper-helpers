@@ -10,7 +10,8 @@ export interface PuppeteerOptions {
   max?: number;
   url?: string;
   waitTimeout?: number;
-  unloadAllExtras?: boolean;
+  unloadJavascript?: boolean;
+  unloadStyles?: boolean;
   inputName?: string;
   text?: string;
   proxyAddress?: string;
@@ -53,16 +54,20 @@ export class NavigatePageToURLOptions implements PuppeteerOptions {
 
   public waitTimeout: number;
 
-  public unloadAllExtras: boolean;
+  public unloadStyles: boolean;
+
+  public unloadJavascript: boolean;
 
   public constructor(
     url: string,
     waitTimeout: number = 0,
-    unloadAllExtras: boolean = false,
+    unloadStyles: boolean = true,
+    unloadJavascript: boolean = false,
   ) {
     this.url = url;
     this.waitTimeout = waitTimeout;
-    this.unloadAllExtras = unloadAllExtras;
+    this.unloadStyles = unloadStyles;
+    this.unloadJavascript = unloadJavascript;
   }
 }
 
@@ -229,25 +234,26 @@ export async function navigatePageToURL(
   page: Page,
   options: PuppeteerOptions,
 ): Promise<void> {
-  const { url, waitTimeout, unloadAllExtras } = options;
+  const { url, waitTimeout, unloadJavascript, unloadStyles } = options;
   console.log(`Connecting to ${url}`);
 
-  if (unloadAllExtras) {
-    console.log(`Unloading JS, CSS, and images: ${url}`);
-    await page.setRequestInterception(true);
-    await page.setJavaScriptEnabled(false);
-    page.on('request', req => {
-      if (
-        req.resourceType() === 'stylesheet' ||
-        req.resourceType() === 'font' ||
-        req.resourceType() === 'image'
-      ) {
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
-  }
+  //   if (unloadJavascript) {
+  //     console.log(`Unloading JS: ${url}`);
+  //     await page.setRequestInterception(true);
+  //     await page.setJavaScriptEnabled(false);
+  //   }
+
+  //   if (unloadStyles) {
+  //     console.log(`Unloading Fonts, and images: ${url}`);
+  //     await page.setRequestInterception(true);
+  //     page.on('request', req => {
+  //       if (req.resourceType() === 'font' || req.resourceType() === 'image') {
+  //         req.abort();
+  //       } else {
+  //         req.continue();
+  //       }
+  //     });
+  //   }
 
   await page.goto(url, {
     waitUntil: 'domcontentloaded',
