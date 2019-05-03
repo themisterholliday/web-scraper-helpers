@@ -35,7 +35,7 @@ interface Proxy {
 async function proxiesFromURL(url: string, page: Page): Promise<Proxy[]> {
   await navigatePageToURL(page, new NavigatePageToURLOptions(url));
   const html = await extractHTMLFromPage(page);
-  return (await getObjectsFromTable(html.html)) as Proxy[];
+  return (await getProxiesFromTable(html.html)) as Proxy[];
 }
 
 export async function fetchProxies(): Promise<Proxy[]> {
@@ -47,7 +47,7 @@ export async function fetchProxies(): Promise<Proxy[]> {
 
   await navigatePageToURL(page, new NavigatePageToURLOptions(startURL));
   const html = await extractHTMLFromPage(page);
-  const firstProxies = (await getObjectsFromTable(html.html)) as Proxy[];
+  const firstProxies = (await getProxiesFromTable(html.html)) as Proxy[];
 
   const pageCount = 3;
   const links = await getAllLinks(html.html)
