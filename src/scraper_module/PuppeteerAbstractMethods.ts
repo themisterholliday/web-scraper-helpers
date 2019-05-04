@@ -2,91 +2,8 @@ import puppeteer, { Page, Browser } from 'puppeteer';
 import { WebsiteHTMLResponse } from './models/WebsiteHTMLResponse';
 import { getRandomNumber } from '../util/RandomUtil';
 
-// Options
-export interface PuppeteerOptions {
-  selector?: string;
-  property?: string;
-  min?: number;
-  max?: number;
-  url?: string;
-  waitTimeout?: number;
-  unloadJavascript?: boolean;
-  unloadStyles?: boolean;
-  inputName?: string;
-  text?: string;
-  proxyAddress?: string;
-}
-
-export class EmptyPuppeteerOptions implements PuppeteerOptions {}
-
-export class WaitRandomTimeOptions implements PuppeteerOptions {
-  public min: number;
-
-  public max: number;
-
-  public constructor(min: number = 1000, max: number = 5000) {
-    this.min = min;
-    this.max = max;
-  }
-}
-
-export class PuppeteerSelectorOptions implements PuppeteerOptions {
-  public selector: string;
-
-  public constructor(selector: string) {
-    this.selector = selector;
-  }
-}
-
-export class PuppeteerSelectorPropertyOptions implements PuppeteerOptions {
-  public selector: string;
-
-  public property: string;
-
-  public constructor(selector: string, property: string) {
-    this.selector = selector;
-    this.property = property;
-  }
-}
-
-export class NavigatePageToURLOptions implements PuppeteerOptions {
-  public url: string;
-
-  public waitTimeout: number;
-
-  public unloadStyles: boolean;
-
-  public unloadJavascript: boolean;
-
-  public constructor(
-    url: string,
-    waitTimeout: number = 0,
-    unloadStyles: boolean = true,
-    unloadJavascript: boolean = false,
-  ) {
-    this.url = url;
-    this.waitTimeout = waitTimeout;
-    this.unloadStyles = unloadStyles;
-    this.unloadJavascript = unloadJavascript;
-  }
-}
-
-export class InputTextIntoSelectorWithInputNameOptions
-  implements PuppeteerOptions {
-  public inputName: string;
-
-  public text: string;
-
-  public unloadAllExtras: boolean;
-
-  public constructor(inputName: string, text: string) {
-    this.inputName = inputName;
-    this.text = text;
-  }
-}
-
 // Browser and page builders
-export async function createBrowser(proxyAddress?: string): Promise<Browser> {
+async function createBrowser(proxyAddress?: string): Promise<Browser> {
   console.log('Creating New Browser');
   const args = ['--incognito'];
   if (proxyAddress !== undefined) {
@@ -98,38 +15,36 @@ export async function createBrowser(proxyAddress?: string): Promise<Browser> {
   return browser;
 }
 
-export async function createPage(browser: Browser): Promise<Page> {
+async function createPage(browser: Browser): Promise<Page> {
   console.log('Creating New Page');
   const page = await browser.newPage();
   return page;
 }
 
-export async function closeBrowser(browser: Browser): Promise<void> {
+async function closeBrowser(browser: Browser): Promise<void> {
   console.log('Closing Browser');
   await browser.close();
 }
 
 // Puppeteer Actions
-export async function waitRandomAmountOfTimeBetween(
+async function waitRandomAmountOfTimeBetween(
   page: Page,
-  options: PuppeteerOptions,
+  min: number = 1000,
+  max: number = 5000,
 ): Promise<void> {
-  const { min, max } = options;
   const randomNumber = getRandomNumber(min, max);
   console.log(`Waiting for random number: ${randomNumber}`);
   await page.waitFor(randomNumber);
 }
 
-export async function scrollPageToEnd(page: Page): Promise<void> {
+async function scrollPageToEnd(page: Page): Promise<void> {
   console.log('Scrolling to end of page');
   return page.evaluate(() => {
     window.scrollBy(0, window.innerHeight);
   });
 }
 
-export async function extractHTMLFromPage(
-  page: Page,
-): Promise<WebsiteHTMLResponse> {
+async function extractHTMLFromPage(page: Page): Promise<WebsiteHTMLResponse> {
   const url = page.url();
   console.log(`Evaluating Html for url: ${url}`);
   const body = await page.evaluate(() => document.body.innerHTML);
@@ -140,11 +55,10 @@ export async function extractHTMLFromPage(
   return new WebsiteHTMLResponse(url, body);
 }
 
-export async function getTextContentForSelector(
+async function getTextContentForSelector(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
 ): Promise<string> {
-  const { selector } = options;
   return page.evaluate(
     selectorToEvaluate =>
       document.querySelector(selectorToEvaluate).textContent,
@@ -152,22 +66,20 @@ export async function getTextContentForSelector(
   );
 }
 
-export async function getValueForSelector(
+async function getValueForSelector(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
 ): Promise<string> {
-  const { selector } = options;
   return page.evaluate(
     selectorToEvaluate => document.querySelector(selectorToEvaluate).value,
     selector,
   );
 }
 
-export async function getTextContentForAllSelectors(
+async function getTextContentForAllSelectors(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
 ): Promise<string[]> {
-  const { selector } = options;
   const results = await page.evaluate(selectorToEvaluate => {
     const divs: HTMLElement[] = Array.from(
       document.querySelectorAll(selectorToEvaluate),
@@ -177,11 +89,10 @@ export async function getTextContentForAllSelectors(
   return results;
 }
 
-export async function getAnchorsForAllSelectors(
+async function getAnchorsForAllSelectors(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
 ): Promise<string[]> {
-  const { selector } = options;
   const results = await page.evaluate(selectorToEvaluate => {
     const divs: HTMLAnchorElement[] = Array.from(
       document.querySelectorAll(selectorToEvaluate),
@@ -191,31 +102,29 @@ export async function getAnchorsForAllSelectors(
   return results;
 }
 
-export async function waitTillSelectorIsVisible(
+async function waitTillSelectorIsVisible(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
 ): Promise<void> {
-  const { selector } = options;
   console.log(`Waiting for Selector: ${selector}`);
   await page.waitFor(selector, { visible: true });
 }
 
-export async function findSelectorAndClick(
+async function findSelectorAndClick(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
 ): Promise<void> {
-  const { selector } = options;
   console.log(`Finding Selector: ${selector}`);
   await page.waitForSelector(selector);
   console.log(`Clicking Selector: ${selector}`);
   await page.click(selector);
 }
 
-export async function getPropertyValue(
+async function getPropertyValue(
   page: Page,
-  options: PuppeteerOptions,
+  selector: string,
+  property: string,
 ): Promise<string> {
-  const { selector, property } = options;
   try {
     return page.evaluate(
       (selectorToEvaluate, propertyToEvaluate) => {
@@ -230,11 +139,13 @@ export async function getPropertyValue(
   }
 }
 
-export async function navigatePageToURL(
+async function navigatePageToURL(
   page: Page,
-  options: PuppeteerOptions,
+  url: string,
+  waitTimeout: number = 0,
+  unloadStyles: boolean = true,
+  unloadJavascript: boolean = false,
 ): Promise<void> {
-  const { url, waitTimeout, unloadJavascript, unloadStyles } = options;
   console.log(`Connecting to ${url}`);
 
   //   if (unloadJavascript) {
@@ -262,11 +173,11 @@ export async function navigatePageToURL(
   console.log(`Connected to ${url}`);
 }
 
-export async function inputTextIntoSelectorWithInputName(
+async function inputTextIntoSelectorWithInputName(
   page: Page,
-  options: PuppeteerOptions,
+  inputName: string,
+  text: string,
 ): Promise<void> {
-  const { text, inputName } = options;
   console.log(`Inputting Text: ${text} for inputName: ${inputName}`);
   await page.evaluate((textToEvaluate: string) => {
     (document.querySelector(
@@ -274,3 +185,21 @@ export async function inputTextIntoSelectorWithInputName(
     ) as HTMLInputElement).value = textToEvaluate;
   }, text);
 }
+
+export {
+  createBrowser,
+  createPage,
+  closeBrowser,
+  waitRandomAmountOfTimeBetween,
+  scrollPageToEnd,
+  extractHTMLFromPage,
+  getTextContentForSelector,
+  getValueForSelector,
+  getTextContentForAllSelectors,
+  getAnchorsForAllSelectors,
+  waitTillSelectorIsVisible,
+  findSelectorAndClick,
+  getPropertyValue,
+  navigatePageToURL,
+  inputTextIntoSelectorWithInputName,
+};

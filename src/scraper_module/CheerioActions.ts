@@ -1,24 +1,18 @@
 import cheerio from 'cheerio';
 
-export function extractTextFromSelector(
-  html: string,
-  selector: string,
-): string {
+function extractTextFromSelector(html: string, selector: string): string {
   console.log(`Extracting Text from selector ${selector}`);
   const $ = cheerio.load(html);
   return $(selector).text();
 }
 
-export function extractValueFromSelector(
-  html: string,
-  selector: string,
-): string {
+function extractValueFromSelector(html: string, selector: string): string {
   console.log(`Extracting Value from selector ${selector}`);
   const $ = cheerio.load(html);
   return $(selector).val();
 }
 
-export function getAllLinks(html: string): string[] {
+function getAllLinks(html: string): string[] {
   const $ = cheerio.load(html);
   const links = $('a');
   const finalLinks: string[] = $(links)
@@ -27,7 +21,7 @@ export function getAllLinks(html: string): string[] {
   return finalLinks;
 }
 
-export function getTextFromElementContainingString(
+function getTextFromElementContainingString(
   html: string,
   string: string,
 ): string {
@@ -35,7 +29,7 @@ export function getTextFromElementContainingString(
   return $(`span:contains(${string})`).text();
 }
 
-export function getTextFromElementAfterElementContainingString(
+function getTextFromElementAfterElementContainingString(
   html: string,
   string: string,
 ): string {
@@ -45,7 +39,7 @@ export function getTextFromElementAfterElementContainingString(
     .text();
 }
 
-export function getProxiesFromTable(
+function getProxiesFromTable(
   html: string,
 ): { ipAddress: string; port: string }[] {
   const $ = cheerio.load(html);
@@ -71,3 +65,12 @@ export function getProxiesFromTable(
     .get();
   return proxies;
 }
+
+export {
+  extractTextFromSelector,
+  extractValueFromSelector,
+  getAllLinks,
+  getTextFromElementContainingString,
+  getTextFromElementAfterElementContainingString,
+  getProxiesFromTable,
+};

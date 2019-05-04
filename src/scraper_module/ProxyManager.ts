@@ -2,29 +2,27 @@ import { Page, Browser } from 'puppeteer';
 import {
   createBrowser,
   createPage,
+  closeBrowser,
   waitRandomAmountOfTimeBetween,
   scrollPageToEnd,
   extractHTMLFromPage,
   getTextContentForSelector,
   getValueForSelector,
+  getTextContentForAllSelectors,
   getAnchorsForAllSelectors,
   waitTillSelectorIsVisible,
   findSelectorAndClick,
   getPropertyValue,
   navigatePageToURL,
   inputTextIntoSelectorWithInputName,
-  PuppeteerOptions,
-  EmptyPuppeteerOptions,
-  WaitRandomTimeOptions,
-  PuppeteerSelectorOptions,
-  PuppeteerSelectorPropertyOptions,
-  NavigatePageToURLOptions,
-  InputTextIntoSelectorWithInputNameOptions,
-  closeBrowser,
 } from '../scraper_module/PuppeteerAbstractMethods';
 import {
-  getProxiesFromTable,
+  extractTextFromSelector,
+  extractValueFromSelector,
   getAllLinks,
+  getTextFromElementContainingString,
+  getTextFromElementAfterElementContainingString,
+  getProxiesFromTable,
 } from '../scraper_module/CheerioActions';
 
 interface Proxy {
@@ -33,7 +31,7 @@ interface Proxy {
 }
 
 async function proxiesFromURL(url: string, page: Page): Promise<Proxy[]> {
-  await navigatePageToURL(page, new NavigatePageToURLOptions(url));
+  await navigatePageToURL(page, url);
   const html = await extractHTMLFromPage(page);
   return (await getProxiesFromTable(html.html)) as Proxy[];
 }
@@ -45,7 +43,7 @@ export async function fetchProxies(): Promise<Proxy[]> {
   const browser = await createBrowser();
   const page = await createPage(browser);
 
-  await navigatePageToURL(page, new NavigatePageToURLOptions(startURL));
+  await navigatePageToURL(page, startURL);
   const html = await extractHTMLFromPage(page);
   const firstProxies = (await getProxiesFromTable(html.html)) as Proxy[];
 
