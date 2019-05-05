@@ -15,7 +15,7 @@ import {
 } from './PuppeteerAbstractMethods';
 
 // Options
-export interface PuppeteerOptions {
+interface PuppeteerOptions {
   selector?: string;
   property?: string;
   min?: number;
@@ -28,9 +28,9 @@ export interface PuppeteerOptions {
   text?: string;
 }
 
-export class EmptyPuppeteerOptions implements PuppeteerOptions {}
+class EmptyPuppeteerOptions implements PuppeteerOptions {}
 
-export class WaitRandomTimeOptions implements PuppeteerOptions {
+class WaitRandomTimeOptions implements PuppeteerOptions {
   public min: number;
 
   public max: number;
@@ -41,7 +41,7 @@ export class WaitRandomTimeOptions implements PuppeteerOptions {
   }
 }
 
-export class PuppeteerSelectorOptions implements PuppeteerOptions {
+class PuppeteerSelectorOptions implements PuppeteerOptions {
   public selector: string;
 
   public constructor(selector: string) {
@@ -49,7 +49,7 @@ export class PuppeteerSelectorOptions implements PuppeteerOptions {
   }
 }
 
-export class PuppeteerSelectorPropertyOptions implements PuppeteerOptions {
+class PuppeteerSelectorPropertyOptions implements PuppeteerOptions {
   public selector: string;
 
   public property: string;
@@ -60,7 +60,7 @@ export class PuppeteerSelectorPropertyOptions implements PuppeteerOptions {
   }
 }
 
-export class NavigatePageToURLOptions implements PuppeteerOptions {
+class NavigatePageToURLOptions implements PuppeteerOptions {
   public url: string;
 
   public waitTimeout: number;
@@ -82,8 +82,7 @@ export class NavigatePageToURLOptions implements PuppeteerOptions {
   }
 }
 
-export class InputTextIntoSelectorWithInputNameOptions
-  implements PuppeteerOptions {
+class InputTextIntoSelectorWithInputNameOptions implements PuppeteerOptions {
   public inputName: string;
 
   public text: string;
@@ -96,7 +95,7 @@ export class InputTextIntoSelectorWithInputNameOptions
   }
 }
 
-export enum PuppeteerActionType {
+enum PuppeteerActionType {
   WaitRandomAmountOfTimeBetween,
   ScrollPageToEnd,
   ExtractHTMLFromPage,
@@ -111,7 +110,139 @@ export enum PuppeteerActionType {
   InputTextIntoSelectorWithInputName,
 }
 
-export class PuppeteerActionBuilder {
+interface PuppeteerAction {
+  type: PuppeteerActionType;
+
+  options: PuppeteerOptions;
+}
+
+class WaitRandomAmountOfTimeBetweenAction implements PuppeteerAction {
+  public type: PuppeteerActionType =
+    PuppeteerActionType.WaitRandomAmountOfTimeBetween;
+
+  public options: PuppeteerOptions;
+
+  public constructor(min: number = 1000, max: number = 5000) {
+    this.options = new WaitRandomTimeOptions(min, max);
+  }
+}
+
+class ScrollPageToEndAction implements PuppeteerAction {
+  public type: PuppeteerActionType = PuppeteerActionType.ScrollPageToEnd;
+
+  public options: PuppeteerOptions;
+
+  public constructor() {
+    this.options = new EmptyPuppeteerOptions();
+  }
+}
+
+class ExtractHTMLFromPageAction implements PuppeteerAction {
+  public type: PuppeteerActionType = PuppeteerActionType.ExtractHTMLFromPage;
+
+  public options: PuppeteerOptions;
+
+  public constructor() {
+    this.options = new EmptyPuppeteerOptions();
+  }
+}
+
+class GetTextContentForSelectorAction implements PuppeteerAction {
+  public type: PuppeteerActionType =
+    PuppeteerActionType.GetTextContentForSelector;
+
+  public options: PuppeteerOptions;
+
+  public constructor(selector: string) {
+    this.options = new PuppeteerSelectorOptions(selector);
+  }
+}
+
+class GetValueForSelectorAction implements PuppeteerAction {
+  public type: PuppeteerActionType = PuppeteerActionType.GetValueForSelector;
+
+  public options: PuppeteerOptions;
+
+  public constructor(selector: string) {
+    this.options = new PuppeteerSelectorOptions(selector);
+  }
+}
+
+class GetAnchorsForAllSelectorsAction implements PuppeteerAction {
+  public type: PuppeteerActionType =
+    PuppeteerActionType.GetAnchorsForAllSelectors;
+
+  public options: PuppeteerOptions;
+
+  public constructor(selector: string) {
+    this.options = new PuppeteerSelectorOptions(selector);
+  }
+}
+
+class WaitTillSelectorIsVisibleAction implements PuppeteerAction {
+  public type: PuppeteerActionType =
+    PuppeteerActionType.WaitTillSelectorIsVisible;
+
+  public options: PuppeteerOptions;
+
+  public constructor(selector: string) {
+    this.options = new PuppeteerSelectorOptions(selector);
+  }
+}
+
+class FindSelectorAndClickAction implements PuppeteerAction {
+  public type: PuppeteerActionType = PuppeteerActionType.FindSelectorAndClick;
+
+  public options: PuppeteerOptions;
+
+  public constructor(selector: string) {
+    this.options = new PuppeteerSelectorOptions(selector);
+  }
+}
+
+class GetPropertyValueAction implements PuppeteerAction {
+  public type: PuppeteerActionType = PuppeteerActionType.GetPropertyValue;
+
+  public options: PuppeteerOptions;
+
+  public constructor(selector: string, property: string) {
+    this.options = new PuppeteerSelectorPropertyOptions(selector, property);
+  }
+}
+
+class NavigatePageToURLAction implements PuppeteerAction {
+  public type: PuppeteerActionType = PuppeteerActionType.NavigatePageToURL;
+
+  public options: PuppeteerOptions;
+
+  public constructor(
+    url: string,
+    waitTimeout: number = 0,
+    unloadAllExtras: boolean = false,
+  ) {
+    this.options = new NavigatePageToURLOptions(
+      url,
+      waitTimeout,
+      unloadAllExtras,
+    );
+  }
+}
+
+class InputTextIntoSelectorWithInputNamAction implements PuppeteerAction {
+  public type: PuppeteerActionType =
+    PuppeteerActionType.InputTextIntoSelectorWithInputName;
+
+  public options: PuppeteerOptions;
+
+  public constructor(inputName: string, text: string) {
+    this.options = new InputTextIntoSelectorWithInputNameOptions(
+      inputName,
+      text,
+    );
+  }
+}
+
+class PuppeteerActionBuilder {
   public static puppeteerActionFrom(
     page: Page,
     action: PuppeteerAction,
@@ -167,125 +298,18 @@ export class PuppeteerActionBuilder {
   }
 }
 
-interface PuppeteerAction {
-  type: PuppeteerActionType;
-
-  options: PuppeteerOptions;
-}
-
-export class WaitRandomAmountOfTimeBetweenAction implements PuppeteerAction {
-  public type: PuppeteerActionType =
-    PuppeteerActionType.WaitRandomAmountOfTimeBetween;
-
-  public options: PuppeteerOptions;
-
-  public constructor(min: number = 1000, max: number = 5000) {
-    this.options = new WaitRandomTimeOptions(min, max);
-  }
-}
-export class ScrollPageToEndAction implements PuppeteerAction {
-  public type: PuppeteerActionType = PuppeteerActionType.ScrollPageToEnd;
-
-  public options: PuppeteerOptions;
-
-  public constructor() {
-    this.options = new EmptyPuppeteerOptions();
-  }
-}
-export class ExtractHTMLFromPageAction implements PuppeteerAction {
-  public type: PuppeteerActionType = PuppeteerActionType.ExtractHTMLFromPage;
-
-  public options: PuppeteerOptions;
-
-  public constructor() {
-    this.options = new EmptyPuppeteerOptions();
-  }
-}
-export class GetTextContentForSelectorAction implements PuppeteerAction {
-  public type: PuppeteerActionType =
-    PuppeteerActionType.GetTextContentForSelector;
-
-  public options: PuppeteerOptions;
-
-  public constructor(selector: string) {
-    this.options = new PuppeteerSelectorOptions(selector);
-  }
-}
-export class GetValueForSelectorAction implements PuppeteerAction {
-  public type: PuppeteerActionType = PuppeteerActionType.GetValueForSelector;
-
-  public options: PuppeteerOptions;
-
-  public constructor(selector: string) {
-    this.options = new PuppeteerSelectorOptions(selector);
-  }
-}
-export class GetAnchorsForAllSelectorsAction implements PuppeteerAction {
-  public type: PuppeteerActionType =
-    PuppeteerActionType.GetAnchorsForAllSelectors;
-
-  public options: PuppeteerOptions;
-
-  public constructor(selector: string) {
-    this.options = new PuppeteerSelectorOptions(selector);
-  }
-}
-export class WaitTillSelectorIsVisibleAction implements PuppeteerAction {
-  public type: PuppeteerActionType =
-    PuppeteerActionType.WaitTillSelectorIsVisible;
-
-  public options: PuppeteerOptions;
-
-  public constructor(selector: string) {
-    this.options = new PuppeteerSelectorOptions(selector);
-  }
-}
-export class FindSelectorAndClickAction implements PuppeteerAction {
-  public type: PuppeteerActionType = PuppeteerActionType.FindSelectorAndClick;
-
-  public options: PuppeteerOptions;
-
-  public constructor(selector: string) {
-    this.options = new PuppeteerSelectorOptions(selector);
-  }
-}
-export class GetPropertyValueAction implements PuppeteerAction {
-  public type: PuppeteerActionType = PuppeteerActionType.GetPropertyValue;
-
-  public options: PuppeteerOptions;
-
-  public constructor(selector: string, property: string) {
-    this.options = new PuppeteerSelectorPropertyOptions(selector, property);
-  }
-}
-export class NavigatePageToURLAction implements PuppeteerAction {
-  public type: PuppeteerActionType = PuppeteerActionType.NavigatePageToURL;
-
-  public options: PuppeteerOptions;
-
-  public constructor(
-    url: string,
-    waitTimeout: number = 0,
-    unloadAllExtras: boolean = false,
-  ) {
-    this.options = new NavigatePageToURLOptions(
-      url,
-      waitTimeout,
-      unloadAllExtras,
-    );
-  }
-}
-export class InputTextIntoSelectorWithInputNamAction
-  implements PuppeteerAction {
-  public type: PuppeteerActionType =
-    PuppeteerActionType.InputTextIntoSelectorWithInputName;
-
-  public options: PuppeteerOptions;
-
-  public constructor(inputName: string, text: string) {
-    this.options = new InputTextIntoSelectorWithInputNameOptions(
-      inputName,
-      text,
-    );
-  }
-}
+export {
+  WaitRandomAmountOfTimeBetweenAction,
+  ScrollPageToEndAction,
+  ExtractHTMLFromPageAction,
+  GetTextContentForSelectorAction,
+  GetValueForSelectorAction,
+  GetAnchorsForAllSelectorsAction,
+  WaitTillSelectorIsVisibleAction,
+  FindSelectorAndClickAction,
+  GetPropertyValueAction,
+  NavigatePageToURLAction,
+  InputTextIntoSelectorWithInputNamAction,
+  PuppeteerActionType,
+  PuppeteerActionBuilder,
+};
