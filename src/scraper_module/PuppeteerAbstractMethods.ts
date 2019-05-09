@@ -1,11 +1,23 @@
 import puppeteer, { Page, Browser } from 'puppeteer';
+import chalk from 'chalk';
 import { WebsiteHTMLResponse } from './models/WebsiteHTMLResponse';
 import { getRandomNumber } from '../util/RandomUtil';
 
+const puppeteerLog = (message: string): void => {
+  console.log(chalk.yellow.bold(message));
+};
+
 // Browser and page builders
 async function createBrowser(proxyAddress?: string): Promise<Browser> {
-  console.log('Creating New Browser');
-  const args = ['--incognito'];
+  puppeteerLog('Creating New Browser');
+  const args = [
+    '--incognito',
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--disable-gpu',
+  ];
   if (proxyAddress !== undefined) {
     args.push(`--proxy-server=${proxyAddress}`);
   }
@@ -16,13 +28,13 @@ async function createBrowser(proxyAddress?: string): Promise<Browser> {
 }
 
 async function createPage(browser: Browser): Promise<Page> {
-  console.log('Creating New Page');
+  puppeteerLog('Creating New Page');
   const page = await browser.newPage();
   return page;
 }
 
 async function closeBrowser(browser: Browser): Promise<void> {
-  console.log('Closing Browser');
+  puppeteerLog('Closing Browser');
   await browser.close();
 }
 
@@ -33,12 +45,12 @@ async function waitRandomAmountOfTimeBetween(
   max: number = 5000,
 ): Promise<void> {
   const randomNumber = getRandomNumber(min, max);
-  console.log(`Waiting for random number: ${randomNumber}`);
+  puppeteerLog(`Waiting for random number: ${randomNumber}`);
   await page.waitFor(randomNumber);
 }
 
 async function scrollPageToEnd(page: Page): Promise<void> {
-  console.log('Scrolling to end of page');
+  puppeteerLog('Scrolling to end of page');
   return page.evaluate(() => {
     window.scrollBy(0, window.innerHeight);
   });
@@ -46,7 +58,7 @@ async function scrollPageToEnd(page: Page): Promise<void> {
 
 async function extractHTMLFromPage(page: Page): Promise<WebsiteHTMLResponse> {
   const url = page.url();
-  console.log(`Evaluating Html for url: ${url}`);
+  puppeteerLog(`Evaluating Html for url: ${url}`);
   const body = await page.evaluate(() => document.body.innerHTML);
   if (body === undefined) {
     throw new Error('No html returned from page');
@@ -106,7 +118,7 @@ async function waitTillSelectorIsVisible(
   page: Page,
   selector: string,
 ): Promise<void> {
-  console.log(`Waiting for Selector: ${selector}`);
+  puppeteerLog(`Waiting for Selector: ${selector}`);
   await page.waitFor(selector, { visible: true });
 }
 
@@ -114,9 +126,9 @@ async function findSelectorAndClick(
   page: Page,
   selector: string,
 ): Promise<void> {
-  console.log(`Finding Selector: ${selector}`);
+  puppeteerLog(`Finding Selector: ${selector}`);
   await page.waitForSelector(selector);
-  console.log(`Clicking Selector: ${selector}`);
+  puppeteerLog(`Clicking Selector: ${selector}`);
   await page.click(selector);
 }
 
@@ -139,38 +151,75 @@ async function getPropertyValue(
   }
 }
 
+const blockedResourceTypes = [
+  'image',
+  'media',
+  'font',
+  'texttrack',
+  'object',
+  'beacon',
+  'csp_report',
+  'imageset',
+];
+
+const skippedResources = [
+  'quantserve',
+  'adzerk',
+  'doubleclick',
+  'adition',
+  'exelator',
+  'sharethrough',
+  'cdn.api.twitter',
+  'google-analytics',
+  'googletagmanager',
+  'google',
+  'fontawesome',
+  'facebook',
+  'analytics',
+  'optimizely',
+  'clicktale',
+  'mixpanel',
+  'zedo',
+  'clicksor',
+  'tiqcdn',
+];
+
 async function navigatePageToURL(
   page: Page,
   url: string,
   waitTimeout: number = 0,
-  unloadStyles: boolean = true,
-  unloadJavascript: boolean = false,
 ): Promise<void> {
-  console.log(`Connecting to ${url}`);
+  puppeteerLog(`Connecting to ${url}`);
 
-  //   if (unloadJavascript) {
-  //     console.log(`Unloading JS: ${url}`);
-  //     await page.setRequestInterception(true);
-  //     await page.setJavaScriptEnabled(false);
-  //   }
-
-  //   if (unloadStyles) {
-  //     console.log(`Unloading Fonts, and images: ${url}`);
-  //     await page.setRequestInterception(true);
-  //     page.on('request', req => {
-  //       if (req.resourceType() === 'font' || req.resourceType() === 'image') {
-  //         req.abort();
-  //       } else {
-  //         req.continue();
-  //       }
-  //     });
-  //   }
-
-  await page.goto(url, {
-    waitUntil: 'domcontentloaded',
+  page.on('request', request => {
+    const requestUrl = request
+      .url()
+      .split('?')[0]
+      .split('#')[0];
+    if (
+      blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
+      skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+    ) {
+      request.abort();
+    } else {
+      request.continue();
+    }
   });
+  const response = await page.goto(url, {
+    timeout: 25000,
+    waitUntil: 'networkidle2',
+  });
+  if (response.status() < 400) {
+    await page.waitFor(3000);
+    const html = await page.content();
+    puppeteerLog(`Status 400 for ${url}`);
+  }
+
+  // await page.goto(url, {
+  //   waitUntil: 'domcontentloaded',
+  // });
   await page.waitFor(waitTimeout);
-  console.log(`Connected to ${url}`);
+  puppeteerLog(`Connected to ${url}`);
 }
 
 async function inputTextIntoSelectorWithInputName(
@@ -178,12 +227,8 @@ async function inputTextIntoSelectorWithInputName(
   inputName: string,
   text: string,
 ): Promise<void> {
-  console.log(`Inputting Text: ${text} for inputName: ${inputName}`);
-  await page.evaluate((textToEvaluate: string) => {
-    (document.querySelector(
-      `input[type=${inputName}]`,
-    ) as HTMLInputElement).value = textToEvaluate;
-  }, text);
+  puppeteerLog(`Inputting Text: ${text} for inputName: ${inputName}`);
+  await page.type(`input[name=${inputName}]`, text, { delay: 100 });
 }
 
 export {

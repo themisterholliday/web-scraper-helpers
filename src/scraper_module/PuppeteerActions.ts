@@ -22,8 +22,6 @@ interface PuppeteerOptions {
   max?: number;
   url?: string;
   waitTimeout?: number;
-  unloadJavascript?: boolean;
-  unloadStyles?: boolean;
   inputName?: string;
   text?: string;
 }
@@ -255,8 +253,6 @@ class PuppeteerActionBuilder {
       max,
       url,
       waitTimeout,
-      unloadJavascript,
-      unloadStyles,
       inputName,
       text,
     } = options;
@@ -282,14 +278,7 @@ class PuppeteerActionBuilder {
       case PuppeteerActionType.GetPropertyValue:
         return () => getPropertyValue(page, selector, property);
       case PuppeteerActionType.NavigatePageToURL:
-        return () =>
-          navigatePageToURL(
-            page,
-            url,
-            waitTimeout,
-            unloadStyles,
-            unloadJavascript,
-          );
+        return () => navigatePageToURL(page, url, waitTimeout);
       case PuppeteerActionType.InputTextIntoSelectorWithInputName:
         return () => inputTextIntoSelectorWithInputName(page, inputName, text);
       default:
