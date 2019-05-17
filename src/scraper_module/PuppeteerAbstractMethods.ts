@@ -5,6 +5,7 @@ import { getRandomNumber } from '../util/RandomUtil';
 
 const puppeteerLog = (message: string): void => {
   console.log(chalk.yellow.bold(message));
+  console.log('––––––––––––––––––––––');
 };
 
 // Browser and page builders
@@ -190,34 +191,35 @@ async function navigatePageToURL(
   waitTimeout: number = 0,
 ): Promise<void> {
   puppeteerLog(`Connecting to ${url}`);
-
-  page.on('request', request => {
-    const requestUrl = request
-      .url()
-      .split('?')[0]
-      .split('#')[0];
-    if (
-      blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
-      skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-    ) {
-      request.abort();
-    } else {
-      request.continue();
-    }
-  });
-  const response = await page.goto(url, {
-    timeout: 25000,
-    waitUntil: 'networkidle2',
-  });
-  if (response.status() < 400) {
-    await page.waitFor(3000);
-    const html = await page.content();
-    puppeteerLog(`Status 400 for ${url}`);
-  }
-
-  // await page.goto(url, {
-  //   waitUntil: 'domcontentloaded',
+  // await page.setRequestInterception(true);
+  // await page.setUserAgent(userAgent);
+  // page.on('request', request => {
+  //   const requestUrl = request
+  //     .url()
+  //     .split('?')[0]
+  //     .split('#')[0];
+  //   if (
+  //     blockedResourceTypes.indexOf(request.resourceType()) !== -1 ||
+  //     skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+  //   ) {
+  //     request.abort();
+  //   } else {
+  //     request.continue();
+  //   }
   // });
+  // const response = await page.goto(url, {
+  //   timeout: 25000,
+  //   waitUntil: 'networkidle2',
+  // });
+  // if (response.status() < 400) {
+  //   await page.waitFor(3000);
+  //   const html = await page.content();
+  //   puppeteerLog(`Status 400 for ${url}`);
+  // }
+
+  await page.goto(url, {
+    waitUntil: 'domcontentloaded',
+  });
   await page.waitFor(waitTimeout);
   puppeteerLog(`Connected to ${url}`);
 }
