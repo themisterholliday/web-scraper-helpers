@@ -9,7 +9,10 @@ const puppeteerLog = (message: string): void => {
 };
 
 // Browser and page builders
-async function createBrowser(proxyAddress?: string): Promise<Browser> {
+async function createBrowser(
+  proxyAddress?: string,
+  headless: boolean = true,
+): Promise<Browser> {
   puppeteerLog('Creating New Browser');
   const args = [
     '--incognito',
@@ -19,11 +22,14 @@ async function createBrowser(proxyAddress?: string): Promise<Browser> {
     '--disable-accelerated-2d-canvas',
     '--disable-gpu',
   ];
-  if (proxyAddress !== undefined) {
+  if (proxyAddress !== null) {
     args.push(`--proxy-server=${proxyAddress}`);
   }
   const browser = await puppeteer.launch({
     args,
+    headless,
+    defaultViewport: null,
+    slowMo: 50,
   });
   return browser;
 }
@@ -55,6 +61,18 @@ async function scrollPageToEnd(page: Page): Promise<void> {
   return page.evaluate(() => {
     window.scrollBy(0, window.innerHeight);
   });
+}
+
+async function scrollPageToEndForCount(
+  page: Page,
+  count: number,
+): Promise<void> {
+  puppeteerLog(`Scrolling to end of page for count ${count}`);
+  const numberOfTries = [...Array(count)];
+  for (const i of numberOfTries) {
+    await scrollPageToEnd(page);
+    await waitRandomAmountOfTimeBetween(page, 1000, 2000);
+  }
 }
 
 async function extractHTMLFromPage(page: Page): Promise<WebsiteHTMLResponse> {
@@ -115,11 +133,20 @@ async function getAnchorsForAllSelectors(
   return results;
 }
 
+async function waitForSelector(
+  page: Page,
+  selector: string,
+  timeout: number = 30000,
+): Promise<void> {
+  puppeteerLog(`Waiting for Selector: ${selector}`);
+  await page.waitFor(selector, { timeout });
+}
+
 async function waitTillSelectorIsVisible(
   page: Page,
   selector: string,
 ): Promise<void> {
-  puppeteerLog(`Waiting for Selector: ${selector}`);
+  puppeteerLog(`Waiting for Selector Is Visible: ${selector}`);
   await page.waitFor(selector, { visible: true });
 }
 
@@ -138,11 +165,14 @@ async function getPropertyValue(
   selector: string,
   property: string,
 ): Promise<string> {
+  puppeteerLog(
+    `getPropertyValue for selector: ${selector}, property: ${property}`,
+  );
   try {
-    return page.evaluate(
+    return await page.evaluate(
       (selectorToEvaluate, propertyToEvaluate) => {
         const element = document.querySelector(selectorToEvaluate);
-        return element[propertyToEvaluate];
+        return element.getAttribute(propertyToEvaluate);
       },
       selector,
       property,
@@ -230,7 +260,16 @@ async function inputTextIntoSelectorWithInputName(
   text: string,
 ): Promise<void> {
   puppeteerLog(`Inputting Text: ${text} for inputName: ${inputName}`);
-  await page.type(`input[name=${inputName}]`, text, { delay: 100 });
+  await page.type(`input[name='${inputName}']`, text, { delay: 50 });
+}
+
+async function typeTextIntoSelector(
+  page: Page,
+  selector: string,
+  text: string,
+): Promise<void> {
+  puppeteerLog(`Inputting Text: ${text} for selector: ${selector}`);
+  await page.type(selector, text, { delay: 50 });
 }
 
 export {
@@ -239,14 +278,17 @@ export {
   closeBrowser,
   waitRandomAmountOfTimeBetween,
   scrollPageToEnd,
+  scrollPageToEndForCount,
   extractHTMLFromPage,
   getTextContentForSelector,
   getValueForSelector,
   getTextContentForAllSelectors,
   getAnchorsForAllSelectors,
+  waitForSelector,
   waitTillSelectorIsVisible,
   findSelectorAndClick,
   getPropertyValue,
   navigatePageToURL,
   inputTextIntoSelectorWithInputName,
+  typeTextIntoSelector,
 };
