@@ -23,9 +23,8 @@ import {
 } from './PuppeteerAbstractMethods';
 // import db from '../workout-database';
 import '../lib/env';
-import { link } from 'fs';
+import db from '../twitter-follower-scrapes-database';
 
-const twitterUrl = 'https://twitter.com/';
 const twitterUsername = process.env.TWITTER_USERNAME;
 const twitterPassword = process.env.TWITTER_PASSWORD;
 
@@ -58,10 +57,10 @@ async function twitterLogin(
   await waitTillSelectorIsVisible(page, appContentSelector);
 }
 
-async function getFollowerTwitterProfileLinksFromProfileURL(
+async function getFollowersTwitterProfileLinksFromProfileURL(
   page: Page,
   url: string,
-  maxScrapeCountDivisor: number,
+  maxScrapeCountDivisor: number = 1,
 ): Promise<string[]> {
   await navigatePageToURL(page, url);
   await waitTillSelectorIsVisible(page, '.ProfileNav-value');
@@ -106,6 +105,7 @@ async function getFollowerTwitterProfileLinksFromProfileURL(
   return finalProfilesURLs;
 }
 
+// Following
 async function switchFollowUserForURL(page: Page, url: string): Promise<void> {
   await navigatePageToURL(page, url);
   const followButtonSelector = '.user-actions-follow-button';
@@ -131,7 +131,7 @@ async function unfollowUserForURL(page: Page, url: string): Promise<void> {
 }
 
 (async () => {
-  const browser = await createBrowser(null, false);
+  const browser = await createBrowser(null);
   const page = await createPage(browser);
   await twitterLogin(
     'https://twitter.com/login',
@@ -139,11 +139,19 @@ async function unfollowUserForURL(page: Page, url: string): Promise<void> {
     twitterUsername,
     twitterPassword,
   );
-  await unfollowUserForURL(page, 'https://twitter.com/JavaScriptDaily').catch(
-    () => console.log(`couldn't find unfollow`),
+  const startingProfileLink = 'https://twitter.com/JavaScriptDaily';
+  const profileLinksArray = await getFollowersTwitterProfileLinksFromProfileURL(
+    page,
+    startingProfileLink,
+    100,
   );
-  await followUserForURL(page, 'https://twitter.com/JavaScriptDaily').catch(
-    () => console.log(`couldn't find follow`),
-  );
+  const profile = {
+    userProfile: {
+      profileLink: startingProfileLink,
+      followers: profileLinksArray,
+    },
+  };
   await closeBrowser(browser);
+  console.log(profile);
+  (db.get('userProfiles') as any).push(profile).write();
 })();
