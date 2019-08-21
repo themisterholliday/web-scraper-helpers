@@ -251,6 +251,11 @@ async function navigatePageToURL(
     waitUntil: 'domcontentloaded',
   });
   await page.waitFor(waitTimeout);
+  page.on('response', response => {
+    if (response.url().endsWith("your/match"))
+      console.log("response code: ", response.status());
+      // do something here
+  });
   puppeteerLog(`Connected to ${url}`);
 }
 

@@ -24,17 +24,17 @@ import {
 // import db from '../workout-database';
 import '../lib/env';
 import db from '../twitter-follower-scrapes-database';
+import currentFollowingDB from '../twitter-current-following-database';
 
 const twitterUsername = process.env.TWITTER_USERNAME;
 const twitterPassword = process.env.TWITTER_PASSWORD;
 
 async function twitterLogin(
-  url: string,
   page: Page,
   username: string,
   password: string,
 ): Promise<void> {
-  await navigatePageToURL(page, url);
+  await navigatePageToURL(page, 'https://twitter.com/login');
   await inputTextIntoSelectorWithInputName(
     page,
     'session[username_or_email]',
@@ -77,7 +77,8 @@ async function getFollowersTwitterProfileLinksFromProfileURL(
   let data = [];
   const maxScrapeCount = parseInt(followerCount) / maxScrapeCountDivisor;
   console.log(`scraping followers with max scrape count of: ${maxScrapeCount}`);
-  while (data.length < maxScrapeCount) {
+  while (data.length !== maxScrapeCount) {
+    console.log(`Current Data Length: ${data.length}`);
     await scrollPageToEnd(page);
     await waitRandomAmountOfTimeBetween(page, 1000, 2000);
     const { html } = await extractHTMLFromPage(page);
@@ -110,7 +111,7 @@ async function switchFollowUserForURL(page: Page, url: string): Promise<void> {
   await navigatePageToURL(page, url);
   const followButtonSelector = '.user-actions-follow-button';
   await waitTillSelectorIsVisible(page, followButtonSelector);
-  await waitRandomAmountOfTimeBetween(page);
+  await waitRandomAmountOfTimeBetween(page, 60000, 70000);
   await findSelectorAndClick(page, followButtonSelector);
 }
 
@@ -130,28 +131,57 @@ async function unfollowUserForURL(page: Page, url: string): Promise<void> {
   await waitForSelector(page, followSelector, 2000);
 }
 
-(async () => {
+export async function setInitialFollowers(): Promise<void> {
+  const { userProfile } = db.get('userProfiles').value()[0];
+  const { followers } = userProfile;
+  currentFollowingDB.set('followers', followers).write();
+}
+
+export async function runFollowerCron(): Promise<void> {
+  const sliceCount = 50;
   const browser = await createBrowser(null);
   const page = await createPage(browser);
-  await twitterLogin(
-    'https://twitter.com/login',
-    page,
-    twitterUsername,
-    twitterPassword,
-  );
-  const startingProfileLink = 'https://twitter.com/JavaScriptDaily';
-  const profileLinksArray = await getFollowersTwitterProfileLinksFromProfileURL(
-    page,
-    startingProfileLink,
-    100,
-  );
-  const profile = {
-    userProfile: {
-      profileLink: startingProfileLink,
-      followers: profileLinksArray,
-    },
-  };
+
+  await twitterLogin(page, twitterUsername, twitterPassword);
+
+  const followers = currentFollowingDB.get('followers').value();
+  const firstOneHundred = followers.slice(0, sliceCount);
+  const erroredUrls: string[] = [];
+  for (const url of firstOneHundred) {
+    await followUserForURL(page, url).catch(() => {
+      erroredUrls.push(url);
+    });
+  }
+
+  const remainingFollowers = followers
+    .slice(sliceCount + 1, followers.length)
+    .concat(erroredUrls);
+  currentFollowingDB.set('followers', remainingFollowers).write();
   await closeBrowser(browser);
-  console.log(profile);
-  (db.get('userProfiles') as any).push(profile).write();
+}
+
+(async () => {
+  // const browser = await createBrowser(null);
+  // const page = await createPage(browser);
+  // await twitterLogin(
+  //   'https://twitter.com/login',
+  //   page,
+  //   twitterUsername,
+  //   twitterPassword,
+  // );
+  // const startingProfileLink = 'https://twitter.com/JavaScriptDaily';
+  // const profileLinksArray = await getFollowersTwitterProfileLinksFromProfileURL(
+  //   page,
+  //   startingProfileLink,
+  //   1,
+  // );
+  // const profile = {
+  //   userProfile: {
+  //     profileLink: startingProfileLink,
+  //     followers: profileLinksArray,
+  //   },
+  // };
+  // await closeBrowser(browser);
+  // (db.get('userProfiles') as any).push(profile).write();
+  await runFollowerCron();
 })();
