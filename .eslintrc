@@ -17,6 +17,7 @@
         "allowExpressions": true
       }
     ],
+    "@typescript-eslint/no-parameter-properties": "off",
     "prettier/prettier": [
       "error",
       {
@@ -27,5 +28,23 @@
         "tabWidth": 2
       }
     ]
+  },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "no-useless-constructor": "off",
+        "@typescript-eslint/no-useless-constructor": "off",
+        "no-empty-function": "off",
+        "@typescript-eslint/no-empty-function": "off"
+      }
+    }
+  ],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
   }
 }

@@ -15,15 +15,14 @@ import {
   getPropertyValue,
   navigatePageToURL,
   inputTextIntoSelectorWithInputName,
-} from './scraper_module/PuppeteerAbstractMethods';
+} from './scraper_module/PuppeteerHelper';
 import {
   extractTextFromSelector,
   extractValueFromSelector,
   getAllLinks,
   getTextFromElementContainingString,
   getTextFromElementAfterElementContainingString,
-  getProxiesFromTable,
-} from './scraper_module/CheerioActions';
+} from './scraper_module/CheerioHelper';
 import { randomBoolByPercentage } from './util/RandomUtil';
 
 // async function getLinksFromChromeWebStore(

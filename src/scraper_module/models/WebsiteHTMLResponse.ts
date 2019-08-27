@@ -1,3 +1,3 @@
 export class WebsiteHTMLResponse {
-  constructor(public url: string, public html: string) {}
+  public constructor(public url: string, public html: string) {}
 }

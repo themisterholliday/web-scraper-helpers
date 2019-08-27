@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-export function promiseWriteFile(fileName: any, object: any): Promise<void> {
+export function promiseWriteFile(fileName: string, object: any): Promise<void> {
   return new Promise((resolve, reject) => {
     fs.writeFile(fileName, object, (err: any) =>
       err ? reject(err) : resolve(),
@@ -8,9 +8,9 @@ export function promiseWriteFile(fileName: any, object: any): Promise<void> {
   });
 }
 
-export function promiseReadFile(fileName: string, type: string): Promise<any> {
+export function promiseReadFile(fileName: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    fs.readFile(fileName, type, (err: any, data: any) =>
+    fs.readFile(fileName, { encoding: 'utf-8' }, (err: any, data: any) =>
       err ? reject(err) : resolve(data),
     );
   });
