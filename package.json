@@ -40,7 +40,7 @@
     "@types/node-cron": "^2.0.2",
     "@types/node-json-db": "0.0.1",
     "@types/puppeteer": "^1.12.3",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "chalk": "^2.4.2",
     "cheerio": "^1.0.0-rc.3",
     "cron": "^1.7.1",
